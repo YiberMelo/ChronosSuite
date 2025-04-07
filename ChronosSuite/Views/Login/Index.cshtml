@@ -1,0 +1,66 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Minimalista</title>
+    <link href="~/css/bootstrap.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="~/lib/sweetalert2/sweetalert2.min.css" rel="stylesheet" />
+    <link href="~/lib/virtual-select-plugin/dist/virtual-select.min.css" rel="stylesheet" />
+</head>
+<body style="background-color:#e3f2e1;">
+    <div class="container d-flex align-items-center justify-content-center vh-100">
+        <div class="row w-100 justify-content-center gap-4">
+
+            <div class="col-md-8 card shadow-sm border-0 rounded-4 p-4">
+                <h4 class="text-center mb-4">Iniciar Sesión</h4>
+                <form id="frmLogin">
+                    <div class="mb-3">
+                        <label for="UserName" class="form-label">Usurario</label>
+                        <input type="text" class="form-control" id="userName" name="UserName" placeholder="Ingresa el usuario" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="Pswd" class="form-label">Contraseña</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="pswd" name="Pswd"
+                                   placeholder="Ingresa tu contraseña" required>
+                            <button class="btn btn-outline-secondary" type="button" id="toggle-password">
+                                <i class="bi bi-eye-fill"></i>
+                            </button>
+                        </div>
+                    </div> 
+                    <button class="btn btn-primary w-100 rounded-3" id="btnSignIn" type="button">
+                        Iniciar Sesion
+                    </button>
+                </form>
+            </div>
+
+            <div class="col-md-4 card shadow-sm border-0 rounded-4 p-4">
+                <div class="d-flex flex-column align-items-center text-center">
+                    <h4 class="text-dark">Autenticación</h4>
+                    <p>Escanea con Google Authenticator:</p>
+                    <img id="authQrImg" class="img-fluid" style="max-width:160px;" alt="Código QR">
+                    <p class="mt-2">Código alternativo:<br><strong id="authCode">DS4OW6NELDDS...</strong></p>
+                </div>
+                <button class="btn btn-primary w-100 rounded-3 mt-3" id="btnSaveQrCode" type="button">
+                    Registrar QR
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+
+    <script src="~/lib/virtual-select-plugin/dist/virtual-select.js"></script>
+
+    <script src="~/jslogin/twofactorsetup.js"></script>
+    <script src="~/jslogin/signin.js"></script>
+</body>
+</html>
