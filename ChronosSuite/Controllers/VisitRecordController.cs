@@ -39,6 +39,14 @@ namespace ChronosSuite.Controllers
                         VisitorIdentification = vr.Visitor != null ? vr.Visitor.Identification : "",
                         vr.Timestamp,
                         FormattedTimestamp = vr.Timestamp.HasValue ? vr.Timestamp.Value.ToString("dd/MM/yyyy HH:mm") : "",
+                        vr.EntryTime,
+                        FormattedEntryTime = vr.EntryTime.HasValue ? vr.EntryTime.Value.ToString("dd/MM/yyyy HH:mm") : "",
+                        vr.ExitTime,
+                        FormattedExitTime = vr.ExitTime.HasValue ? vr.ExitTime.Value.ToString("dd/MM/yyyy HH:mm") : "",
+                        vr.HasExited,
+                        vr.HasEntered,
+                        vr.ReportFlag,
+                        vr.VisitPurpose,
                         vr.AuthorizedEmployeeId,
                         AuthorizedEmployeeName = vr.AuthorizedEmployee != null ? $"{vr.AuthorizedEmployee.FirstName} {vr.AuthorizedEmployee.LastName}" : "No especificado",
                         vr.LocationId,
@@ -77,6 +85,15 @@ namespace ChronosSuite.Controllers
                         VisitorName = vr.Visitor != null ? $"{vr.Visitor.FirstName} {vr.Visitor.LastName}" : "Sin visitante",
                         VisitorIdentification = vr.Visitor != null ? vr.Visitor.Identification : "",
                         vr.Timestamp,
+                        FormattedTimestamp = vr.Timestamp.HasValue ? vr.Timestamp.Value.ToString("dd/MM/yyyy HH:mm") : "",
+                        vr.EntryTime,
+                        FormattedEntryTime = vr.EntryTime.HasValue ? vr.EntryTime.Value.ToString("dd/MM/yyyy HH:mm") : "",
+                        vr.ExitTime,
+                        FormattedExitTime = vr.ExitTime.HasValue ? vr.ExitTime.Value.ToString("dd/MM/yyyy HH:mm") : "",
+                        vr.HasExited,
+                        vr.HasEntered,
+                        vr.ReportFlag,
+                        vr.VisitPurpose,
                         vr.AuthorizedEmployeeId,
                         AuthorizedEmployeeName = vr.AuthorizedEmployee != null ? $"{vr.AuthorizedEmployee.FirstName} {vr.AuthorizedEmployee.LastName}" : "No especificado",
                         vr.LocationId,
@@ -121,7 +138,54 @@ namespace ChronosSuite.Controllers
                     UserId = currentUser.Id, // ID del usuario que registra la visita
                     CarriedObjects = data.TryGetProperty("carriedObjects", out var carriedObjectsElement) ?
                                      carriedObjectsElement.GetString() : null,
+                    HasExited = false, // Por defecto, el visitante no ha salido
+                    HasEntered = false, // Por defecto, el visitante no ha entrado
+                    ReportFlag = false // Por defecto, no está marcado para reporte
                 };
+
+                // Verificar si es visita inmediata
+                bool isImmediateVisit = false;
+                if (data.TryGetProperty("isImmediateVisit", out var immediateVisitElement) && 
+                    !immediateVisitElement.ValueKind.Equals(JsonValueKind.Null))
+                {
+                    isImmediateVisit = immediateVisitElement.GetBoolean();
+                }
+
+                // Manejar la hora de entrada según el tipo de visita
+                if (isImmediateVisit)
+                {
+                    // Si es visita inmediata, registrar la hora actual como hora de entrada
+                    visitRecord.EntryTime = DateTime.Now;
+                    visitRecord.HasEntered = true; // Marcar que el visitante ya entró
+                }
+                else if (data.TryGetProperty("entryTime", out var entryTimeElement) && 
+                    !entryTimeElement.ValueKind.Equals(JsonValueKind.Null))
+                {
+                    string? entryTimeString = entryTimeElement.GetString();
+                    if (!string.IsNullOrEmpty(entryTimeString))
+                    {
+                        visitRecord.EntryTime = DateTime.Parse(entryTimeString);
+                    }
+                    // No marcar HasEntered todavía, ya que es una entrada programada
+                }
+
+                // Manejar propósito de la visita
+                if (data.TryGetProperty("visitPurpose", out var visitPurposeElement) &&
+                    !visitPurposeElement.ValueKind.Equals(JsonValueKind.Null))
+                {
+                    visitRecord.VisitPurpose = visitPurposeElement.GetString();
+                }
+
+                // Procesar la hora estimada de salida
+                if (data.TryGetProperty("exitTime", out var exitTimeElement) && 
+                    !exitTimeElement.ValueKind.Equals(JsonValueKind.Null))
+                {
+                    string? exitTimeString = exitTimeElement.GetString();
+                    if (!string.IsNullOrEmpty(exitTimeString))
+                    {
+                        visitRecord.ExitTime = DateTime.Parse(exitTimeString);
+                    }
+                }
 
                 // Asignar empleado autorizado
                 if (data.TryGetProperty("authorizedEmployeeId", out var employeeElement) && 
@@ -214,6 +278,59 @@ namespace ChronosSuite.Controllers
                     visitRecord.LocationId = null;
                 }
 
+                // Actualizar propósito de la visita
+                if (data.TryGetProperty("visitPurpose", out var visitPurposeElement) && 
+                    !visitPurposeElement.ValueKind.Equals(JsonValueKind.Null))
+                {
+                    visitRecord.VisitPurpose = visitPurposeElement.GetString();
+                }
+                else
+                {
+                    visitRecord.VisitPurpose = null;
+                }
+
+                // Actualizar campos de entrada/salida
+                if (data.TryGetProperty("entryTime", out var entryTimeElement) && 
+                    !entryTimeElement.ValueKind.Equals(JsonValueKind.Null))
+                {
+                    string? entryTimeString = entryTimeElement.GetString();
+                    if (!string.IsNullOrEmpty(entryTimeString))
+                    {
+                        visitRecord.EntryTime = DateTime.Parse(entryTimeString);
+                        visitRecord.HasEntered = true; // Si hay hora de entrada, el visitante entró
+                    }
+                }
+
+                // Procesar la hora estimada de salida para actualización
+                if (data.TryGetProperty("exitTime", out var exitTimeElement) && 
+                    !exitTimeElement.ValueKind.Equals(JsonValueKind.Null))
+                {
+                    string? exitTimeString = exitTimeElement.GetString();
+                    if (!string.IsNullOrEmpty(exitTimeString))
+                    {
+                        visitRecord.ExitTime = DateTime.Parse(exitTimeString);
+                        // No marcamos HasExited como true porque es sólo una hora estimada de salida
+                    }
+                }
+
+                if (data.TryGetProperty("hasEntered", out var enteredElement) && 
+                    !enteredElement.ValueKind.Equals(JsonValueKind.Null))
+                {
+                    visitRecord.HasEntered = enteredElement.GetBoolean();
+                }
+                
+                if (data.TryGetProperty("hasExited", out var exitedElement) && 
+                    !exitedElement.ValueKind.Equals(JsonValueKind.Null))
+                {
+                    visitRecord.HasExited = exitedElement.GetBoolean();
+                }
+                
+                if (data.TryGetProperty("reportFlag", out var reportElement) && 
+                    !reportElement.ValueKind.Equals(JsonValueKind.Null))
+                {
+                    visitRecord.ReportFlag = reportElement.GetBoolean();
+                }
+
                 // Actualizar foto si se proporciona una nueva
                 if (data.TryGetProperty("photoBase64", out var photoElement) && 
                     !photoElement.ValueKind.Equals(JsonValueKind.Null))
@@ -234,6 +351,95 @@ namespace ChronosSuite.Controllers
                 await _context.SaveChangesAsync();
                 
                 return Json(new { success = true, message = "Registro de visita actualizado correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        // POST: /VisitRecord/RegisterEntry/5
+        [HttpPost]
+        public async Task<IActionResult> RegisterEntry(int id)
+        {
+            try
+            {
+                var visitRecord = await _context.VisitRecords.FindAsync(id);
+                if (visitRecord == null)
+                {
+                    return NotFound(new { success = false, message = "Registro de visita no encontrado" });
+                }
+
+                // Registrar la entrada
+                visitRecord.EntryTime = DateTime.Now;
+                visitRecord.HasEntered = true; // Marcar que el visitante ha entrado
+
+                _context.VisitRecords.Update(visitRecord);
+                await _context.SaveChangesAsync();
+                
+                return Json(new { success = true, message = "Entrada registrada correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        // POST: /VisitRecord/RegisterExit/5
+        [HttpPost]
+        public async Task<IActionResult> RegisterExit(int id)
+        {
+            try
+            {
+                var visitRecord = await _context.VisitRecords.FindAsync(id);
+                if (visitRecord == null)
+                {
+                    return NotFound(new { success = false, message = "Registro de visita no encontrado" });
+                }
+
+                if (!visitRecord.HasEntered)
+                {
+                    return BadRequest(new { success = false, message = "No se puede registrar la salida sin haber registrado la entrada" });
+                }
+
+                // Registrar la salida
+                visitRecord.ExitTime = DateTime.Now;
+                visitRecord.HasExited = true;
+
+                _context.VisitRecords.Update(visitRecord);
+                await _context.SaveChangesAsync();
+                
+                return Json(new { success = true, message = "Salida registrada correctamente" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        // POST: /VisitRecord/ToggleReport/5
+        [HttpPost]
+        public async Task<IActionResult> ToggleReport(int id)
+        {
+            try
+            {
+                var visitRecord = await _context.VisitRecords.FindAsync(id);
+                if (visitRecord == null)
+                {
+                    return NotFound(new { success = false, message = "Registro de visita no encontrado" });
+                }
+
+                // Alternar el estado de reporte
+                visitRecord.ReportFlag = !visitRecord.ReportFlag;
+
+                _context.VisitRecords.Update(visitRecord);
+                await _context.SaveChangesAsync();
+                
+                string message = visitRecord.ReportFlag 
+                    ? "Registro marcado para reporte" 
+                    : "Marca de reporte eliminada";
+                    
+                return Json(new { success = true, message = message, reportFlag = visitRecord.ReportFlag });
             }
             catch (Exception ex)
             {

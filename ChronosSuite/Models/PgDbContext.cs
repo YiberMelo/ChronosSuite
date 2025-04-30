@@ -141,6 +141,18 @@ public partial class PgDbContext : DbContext
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("timestamp");
+            entity.Property(e => e.EntryTime)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("entry_time");
+            entity.Property(e => e.ExitTime)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("exit_time");
+            entity.Property(e => e.HasExited)
+                .HasDefaultValue(false)
+                .HasColumnName("has_exited");
+            entity.Property(e => e.ReportFlag)
+                .HasDefaultValue(false)
+                .HasColumnName("report_flag");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.VisitorId).HasColumnName("visitor_id");
 

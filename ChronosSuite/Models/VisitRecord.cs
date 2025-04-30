@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ChronosSuite.Models;
 
@@ -10,6 +11,24 @@ public partial class VisitRecord
     public int? VisitorId { get; set; }
 
     public DateTime? Timestamp { get; set; }
+    
+    [Column("entry_time")]
+    public DateTime? EntryTime { get; set; }
+    
+    [Column("exit_time")]
+    public DateTime? ExitTime { get; set; }
+    
+    [Column("has_exited")]
+    public bool HasExited { get; set; }
+    
+    [Column("has_entered")]
+    public bool HasEntered { get; set; }
+    
+    [Column("report_flag")]
+    public bool ReportFlag { get; set; }
+    
+    [Column("visit_purpose")]
+    public string? VisitPurpose { get; set; }
 
     public byte[]? Photo { get; set; }
 
@@ -19,6 +38,7 @@ public partial class VisitRecord
 
     public int? LocationId { get; set; }
 
+    [Column("carried_objects")]
     public string? CarriedObjects { get; set; }
 
     public virtual Employee? AuthorizedEmployee { get; set; }
