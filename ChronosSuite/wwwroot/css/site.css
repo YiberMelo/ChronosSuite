@@ -18,5 +18,377 @@ html {
 }
 
 body {
-  margin-bottom: 60px;
+  margin-bottom: 0;
+  font-family: 'Poppins', sans-serif;
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+/* ======= CLASES REUTILIZABLES PARA CHRONOS SUITE ======= */
+
+/* Fondos con degradados */
+.bg-gradient-green {
+  background: linear-gradient(135deg, #43a047 0%, #1b5e20 100%);
+  color: white;
+}
+
+.bg-light-green {
+  background-color: #e3f2e1;
+}
+
+/* Botones personalizados */
+.btn-chronos {
+  background-color: #43a047;
+  border-color: #43a047;
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 12px 15px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.btn-chronos:hover {
+  background-color: #2e7d32;
+  border-color: #2e7d32;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(46, 125, 50, 0.3);
+}
+
+.btn-chronos-outline {
+  background-color: transparent;
+  border: 1px solid #43a047;
+  color: #43a047;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 12px 15px;
+  transition: all 0.3s ease;
+}
+
+.btn-chronos-outline:hover {
+  background-color: #43a047;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(46, 125, 50, 0.2);
+}
+
+/* Tarjetas personalizadas */
+.card-chronos {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.card-chronos:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.card-chronos .card-header {
+  background-color: #43a047;
+  color: white;
+  border-bottom: none;
+  font-weight: 600;
+  padding: 15px 20px;
+}
+
+.card-chronos .card-body {
+  padding: 20px;
+}
+
+/* Formularios mejorados */
+.form-control-chronos {
+  border-radius: 8px;
+  padding: 12px 15px;
+  border: 1px solid #e0e0e0;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.form-control-chronos:focus {
+  border-color: #43a047;
+  box-shadow: 0 0 0 0.2rem rgba(67, 160, 71, 0.25);
+  background-color: #fff;
+}
+
+.input-group-chronos {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.input-group-chronos .input-group-text {
+  background-color: #43a047;
+  color: white;
+  border: none;
+}
+
+/* Badges */
+.badge-chronos {
+  background-color: #43a047;
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 5px 10px;
+}
+
+.badge-chronos-outline {
+  background-color: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: white;
+  border-radius: 30px;
+  padding: 6px 15px;
+  font-size: 0.8rem;
+}
+
+/* Títulos de secciones */
+.section-title {
+  position: relative;
+  margin-bottom: 25px;
+  font-weight: 600;
+  color: #333;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -10px;
+  height: 4px;
+  width: 50px;
+  background-color: #43a047;
+  border-radius: 2px;
+}
+
+/* Animaciones */
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hover-lift {
+  transition: transform 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px);
+}
+
+/* Estilos de login y 2FA */
+.login-container {
+  max-width: 1000px;
+  background-color: #fff;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.login-form {
+  padding: 40px;
+}
+
+.system-name {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.qr-code {
+  max-width: 150px;
+  margin: 0 auto 15px;
+  padding: 10px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.qr-code-text {
+  background-color: #f8f9fa;
+  padding: 8px;
+  border-radius: 8px;
+  display: inline-block;
+  font-size: 12px;
+  font-family: monospace;
+  color: #333;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* ======= ESTILOS DEL LAYOUT PRINCIPAL ======= */
+
+/* Layout principal con sidebar */
+.wrapper {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  height: 100%;
+  overflow-x: hidden;
+}
+
+/* Estilos del sidebar */
+.sidebar {
+  width: 90px;
+  min-width: 90px;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+.sidebar.hidden {
+  margin-left: -90px;
+}
+
+.sidebar-nav {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 1rem;
+}
+
+.sidebar-item {
+  width: 100%;
+}
+
+.sidebar-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0.5rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  text-align: center;
+  font-size: 0.7rem;
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+}
+
+.sidebar-link i {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-left: 3px solid #66bb6a;
+}
+
+.sidebar-link.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+  border-left: 3px solid white;
+}
+
+/* Estilos del contenido principal */
+.main {
+  width: calc(100% - 90px);
+  margin-left: 90px;
+  min-height: 100vh;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.main.full-width {
+  width: 100%;
+  margin-left: 0;
+}
+
+/* Estilos de la barra de navegación superior */
+.navbar {
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  background-color: white !important;
+}
+
+.toggle-btn {
+  background: transparent;
+  border: none;
+  color: #616161;
+  cursor: pointer;
+  padding: 0.5rem;
+  font-size: 1.3rem;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+  color: #43a047;
+  transform: scale(1.1);
+}
+
+/* Contenedor del contenido principal */
+.content-container {
+  flex: 1;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+}
+
+/* Estilos para tablas de datos */
+.table-chronos {
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.table-chronos thead th {
+  background-color: #43a047;
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 1rem;
+}
+
+.table-chronos tbody tr:nth-child(even) {
+  background-color: rgba(67, 160, 71, 0.05);
+}
+
+.table-chronos tbody tr:hover {
+  background-color: rgba(67, 160, 71, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 70px;
+    min-width: 70px;
+  }
+  
+  .sidebar.hidden {
+    margin-left: -70px;
+  }
+  
+  .main {
+    width: calc(100% - 70px);
+    margin-left: 70px;
+  }
+  
+  .main.full-width {
+    width: 100%;
+    margin-left: 0;
+  }
+  
+  .sidebar-link {
+    padding: 0.8rem 0.3rem;
+    font-size: 0.6rem;
+  }
+  
+  .sidebar-link i {
+    font-size: 1.2rem;
+  }
 }

@@ -36,6 +36,17 @@ namespace ChronosSuite.Controllers
             return View();
         }
 
+        // Método para cerrar sesión
+        [HttpGet]
+        public async Task<IActionResult> SignOut()
+        {
+            // Cerrar sesión de la cookie de autenticación
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            
+            // Redirigir a la página de inicio de sesión
+            return RedirectToAction("Index", "Login");
+        }
+
         private string GenerateToken(string userName, string userId)
         {
             var tokenHandler = new JwtSecurityTokenHandler();

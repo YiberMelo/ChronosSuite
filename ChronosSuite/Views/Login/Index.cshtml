@@ -7,49 +7,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Minimalista</title>
+    <title>ChronosSuite - Acceso al Sistema</title>
     <link href="~/css/bootstrap.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="~/css/site.css" rel="stylesheet" />
     <link href="~/lib/sweetalert2/sweetalert2.min.css" rel="stylesheet" />
     <link href="~/lib/virtual-select-plugin/dist/virtual-select.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body style="background-color:#e3f2e1;">
+<body class="bg-light-green">
     <div class="container d-flex align-items-center justify-content-center vh-100">
-        <div class="row w-100 justify-content-center gap-4">
-
-            <div class="col-md-8 card shadow-sm border-0 rounded-4 p-4">
-                <h4 class="text-center mb-4">Iniciar Sesión</h4>
-                <form id="frmLogin">
-                    <div class="mb-3">
-                        <label for="UserName" class="form-label">Usurario</label>
-                        <input type="text" class="form-control" id="userName" name="UserName" placeholder="Ingresa el usuario" required>
+        <div class="login-container row shadow-lg fade-in">
+            <div class="col-md-5 bg-gradient-green d-none d-md-block">
+                <div class="text-center my-4">
+                    <i class="bi bi-clock-history display-1"></i>
+                </div>
+                <div class="text-center mt-5">
+                    <div class="system-name">ChronosSuite</div>
+                    <div class="my-4">
+                        Sistema de gestión y control de visitas
+                        <br>
+                        <span class="badge-chronos-outline mt-3 d-inline-block">Control • Seguridad • Eficiencia</span>
                     </div>
-                    <div class="mb-3">
-                        <label for="Pswd" class="form-label">Contraseña</label>
-                        <div class="input-group">
-                            <input type="password" class="form-control" id="pswd" name="Pswd"
-                                   placeholder="Ingresa tu contraseña" required>
-                            <button class="btn btn-outline-secondary" type="button" id="toggle-password">
-                                <i class="bi bi-eye-fill"></i>
+                </div>
+            </div>
+            <div class="col-md-7 bg-white p-0">
+                <div class="login-form">
+                    <div class="d-md-none text-center mb-4">
+                        <i class="bi bi-clock-history text-success" style="font-size: 3rem;"></i>
+                        <h2 class="mb-0">ChronosSuite</h2>
+                    </div>
+                    
+                    <h3 class="section-title">Iniciar Sesión</h3>
+                    
+                    <form id="frmLogin">
+                        <div class="mb-4">
+                            <label for="UserName" class="form-label">Usuario</label>
+                            <div class="input-group input-group-chronos">
+                                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                                <input type="text" class="form-control form-control-chronos" id="userName" name="UserName" 
+                                       placeholder="Ingresa tu nombre de usuario" required autofocus>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="Pswd" class="form-label">Contraseña</label>
+                            <div class="input-group input-group-chronos">
+                                <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                                <input type="password" class="form-control form-control-chronos" id="pswd" name="Pswd"
+                                       placeholder="Ingresa tu contraseña" required>
+                                <button class="btn btn-chronos-outline" type="button" id="toggle-password">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button class="btn btn-chronos w-100 hover-lift" id="btnSignIn" type="button">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+                        </button>
+                    </form>
+                    
+                    <div class="card-chronos mt-4">
+                        <div class="card-header">
+                            <i class="bi bi-shield-lock me-2"></i>Autenticación de dos factores
+                        </div>
+                        <div class="card-body text-center">
+                            <p class="text-muted">Escanea este código QR con Google Authenticator para aumentar la seguridad de tu cuenta</p>
+                            <div class="qr-code mx-auto">
+                                <img id="authQrImg" class="img-fluid" alt="Código QR">
+                            </div>
+                            <div>
+                                <p class="mb-1 small">Código alternativo:</p>
+                                <div class="qr-code-text" id="authCode">Generando...</div>
+                            </div>
+                            <button class="btn btn-chronos w-100 mt-3 hover-lift" id="btnSaveQrCode" type="button">
+                                <i class="bi bi-qr-code-scan me-2"></i>Activar verificación en dos pasos
                             </button>
                         </div>
-                    </div> 
-                    <button class="btn btn-primary w-100 rounded-3" id="btnSignIn" type="button">
-                        Iniciar Sesion
-                    </button>
-                </form>
-            </div>
-
-            <div class="col-md-4 card shadow-sm border-0 rounded-4 p-4">
-                <div class="d-flex flex-column align-items-center text-center">
-                    <h4 class="text-dark">Autenticación</h4>
-                    <p>Escanea con Google Authenticator:</p>
-                    <img id="authQrImg" class="img-fluid" style="max-width:160px;" alt="Código QR">
-                    <p class="mt-2">Código alternativo:<br><strong id="authCode">DS4OW6NELDDS...</strong></p>
+                    </div>
+                    
+                    <div class="text-center mt-4 text-muted small">
+                        ChronosSuite &copy; @DateTime.Now.Year - Sistema de gestión y control de visitas
+                    </div>
                 </div>
-                <button class="btn btn-primary w-100 rounded-3 mt-3" id="btnSaveQrCode" type="button">
-                    Registrar QR
-                </button>
             </div>
         </div>
     </div>
@@ -57,9 +95,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
-
     <script src="~/lib/virtual-select-plugin/dist/virtual-select.js"></script>
-
     <script src="~/jslogin/twofactorsetup.js"></script>
     <script src="~/jslogin/signin.js"></script>
 </body>
