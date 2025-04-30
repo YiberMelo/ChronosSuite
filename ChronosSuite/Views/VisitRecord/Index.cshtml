@@ -1,0 +1,167 @@
+@{
+    ViewData["Title"] = "Gestión de Registros";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="section-title">Gestión de Registros de Visitas</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <button id="btnAddVisitRecord" class="btn btn-chronos">
+                <i class="bi bi-plus-circle me-2"></i>Nuevo Registro
+            </button>
+        </div>
+    </div>
+
+    <div class="card card-chronos mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Listado de Registros</h5>
+            <div class="input-group input-group-chronos" style="width: 300px;">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" id="quickFilter" class="form-control form-control-chronos" placeholder="Buscar registros...">
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="visitRecordsTable"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear/Editar Registro de Visita -->
+<div class="modal fade" id="visitRecordModal" tabindex="-1" aria-labelledby="visitRecordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-green text-white">
+                <h5 class="modal-title" id="visitRecordModalLabel">Nuevo Registro de Visita</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="visitRecordForm">
+                    <input type="hidden" id="visitRecordId" value="0">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="visitorId" class="form-label">Visitante <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-chronos" id="visitorId" required>
+                                <option value="">Seleccione un visitante</option>
+                                <!-- Se llenará dinámicamente -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="locationId" class="form-label">Ubicación</label>
+                            <select class="form-select form-select-chronos" id="locationId">
+                                <option value="">Seleccione una ubicación</option>
+                                <!-- Se llenará dinámicamente -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="authorizedEmployeeId" class="form-label">Empleado autorizado</label>
+                            <select class="form-select form-select-chronos" id="authorizedEmployeeId">
+                                <option value="">Seleccione un empleado</option>
+                                <!-- Se llenará dinámicamente -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="carriedObjects" class="form-label">Objetos que porta</label>
+                        <textarea class="form-control form-control-chronos" id="carriedObjects" rows="3"
+                            placeholder="Describa los objetos que porta el visitante"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="photoCapture" class="form-label">Fotografía</label>
+                        <div class="row">
+                            <div class="col-md-6 text-center">
+                                <div class="camera-container mb-2">
+                                    <video id="camera" class="d-none w-100 border rounded"></video>
+                                    <canvas id="photoCanvas" class="d-none w-100 border rounded"></canvas>
+                                    <img id="photoPreview" class="w-100 border rounded" src="/images/user-placeholder.png" alt="Vista previa de la foto">
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button type="button" id="btnStartCamera" class="btn btn-sm btn-chronos-outline">
+                                        <i class="bi bi-camera"></i> Cámara
+                                    </button>
+                                    <button type="button" id="btnCapturePhoto" class="btn btn-sm btn-chronos-outline d-none">
+                                        <i class="bi bi-camera"></i> Capturar
+                                    </button>
+                                    <button type="button" id="btnUploadPhoto" class="btn btn-sm btn-chronos-outline">
+                                        <i class="bi bi-upload"></i> Subir
+                                    </button>
+                                    <input type="file" id="photoUpload" class="d-none" accept="image/*">
+                                </div>
+                                <input type="hidden" id="photoBase64">
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i> La fotografía es opcional. Si el visitante ya tiene una foto registrada, no es necesario capturar una nueva.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-chronos-outline" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-chronos" id="btnSaveVisitRecord">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Ver Detalles del Registro -->
+<div class="modal fade" id="visitRecordDetailsModal" tabindex="-1" aria-labelledby="visitRecordDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-green text-white">
+                <h5 class="modal-title" id="visitRecordDetailsModalLabel">Detalles del Registro</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <img id="detailsPhoto" class="img-fluid rounded mb-3" src="/images/user-placeholder.png" alt="Foto del visitante">
+                        <h5 id="detailsVisitorName" class="mb-1"></h5>
+                        <p id="detailsVisitorIdentification" class="text-muted"></p>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h6 class="border-bottom pb-2">Información del registro</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Fecha y hora:</strong> <span id="detailsTimestamp"></span></p>
+                                <p><strong>Ubicación:</strong> <span id="detailsLocation"></span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Empleado autoriza:</strong> <span id="detailsAuthorizedEmployee"></span></p>
+                                <p><strong>Registrado por:</strong> <span id="detailsUser"></span></p>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <h6 class="border-bottom pb-2">Objetos portados</h6>
+                                <p id="detailsCarriedObjects"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-chronos-outline" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-chronos" id="btnEditFromDetails">Editar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- SweetAlert2 para las notificaciones -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/jsvisitrecord/visitrecord.js"></script>
+}

@@ -43,6 +43,9 @@ namespace ChronosSuite.Controllers
             // Cerrar sesión de la cookie de autenticación
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             
+            // Agregar una cabecera para instruir al cliente que elimine el token JWT
+            Response.Headers.Add("Clear-JWT", "true");
+            
             // Redirigir a la página de inicio de sesión
             return RedirectToAction("Index", "Login");
         }

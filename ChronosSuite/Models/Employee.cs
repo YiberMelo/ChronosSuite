@@ -16,6 +16,10 @@ public partial class Employee
     public string Email { get; set; } = null!;
 
     public string? PhoneNumber { get; set; }
+    
+    public int? CompanyId { get; set; }
+
+    public virtual Company? Company { get; set; }
 
     public virtual ICollection<VisitRecord> VisitRecords { get; set; } = new List<VisitRecord>();
 }

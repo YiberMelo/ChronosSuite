@@ -63,6 +63,7 @@ public partial class PgDbContext : DbContext
             entity.HasIndex(e => e.Email, "employees_email_key").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.CompanyId).HasColumnName("company_id");
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
                 .HasColumnName("email");
@@ -78,6 +79,11 @@ public partial class PgDbContext : DbContext
             entity.Property(e => e.Position)
                 .HasMaxLength(100)
                 .HasColumnName("position");
+                
+            entity.HasOne(d => d.Company).WithMany()
+                .HasForeignKey(d => d.CompanyId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("employees_company_id_fkey");
         });
 
         modelBuilder.Entity<Location>(entity =>
@@ -90,6 +96,8 @@ public partial class PgDbContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
                 .HasColumnName("name");
+            entity.Property(e => e.Description)
+                .HasColumnName("description");
         });
 
         modelBuilder.Entity<User>(entity =>

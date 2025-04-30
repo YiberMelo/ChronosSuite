@@ -1,0 +1,206 @@
+@{
+    ViewData["Title"] = "Gestión de Visitantes";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="section-title">Gestión de Visitantes</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <button id="btnAddVisitor" class="btn btn-chronos">
+                <i class="bi bi-plus-circle me-2"></i>Nuevo Visitante
+            </button>
+        </div>
+    </div>
+
+    <div class="card card-chronos mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Listado de Visitantes</h5>
+            <div class="input-group input-group-chronos" style="width: 300px;">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" id="quickFilter" class="form-control form-control-chronos" placeholder="Buscar visitantes...">
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="visitorsTable"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear/Editar Visitante -->
+<div class="modal fade" id="visitorModal" tabindex="-1" aria-labelledby="visitorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-green text-white">
+                <h5 class="modal-title" id="visitorModalLabel">Nuevo Visitante</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="visitorForm">
+                    <input type="hidden" id="visitorId" value="0">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="firstName" class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-chronos" id="firstName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="lastName" class="form-label">Apellido <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-chronos" id="lastName" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="identification" class="form-label">Identificación <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-chronos" id="identification" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="companyId" class="form-label">Empresa</label>
+                            <select class="form-select form-select-chronos" id="companyId">
+                                <option value="">Seleccione una empresa</option>
+                                <!-- Las opciones se cargarán dinámicamente -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="gender" class="form-label">Género</label>
+                            <select class="form-select form-select-chronos" id="gender">
+                                <option value="">Seleccione un género</option>
+                                <option value="Masculino">Masculino</option>
+                                <option value="Femenino">Femenino</option>
+                                <option value="Otro">Otro</option>
+                                <option value="Prefiero no decir">Prefiero no decir</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="bloodType" class="form-label">Tipo de Sangre</label>
+                            <select class="form-select form-select-chronos" id="bloodType">
+                                <option value="">Seleccione un tipo</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="phoneNumber" class="form-label">Teléfono</label>
+                            <input type="text" class="form-control form-control-chronos" id="phoneNumber">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Correo Electrónico</label>
+                            <input type="email" class="form-control form-control-chronos" id="email">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="address" class="form-label">Dirección</label>
+                            <input type="text" class="form-control form-control-chronos" id="address">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="dateOfBirth" class="form-label">Fecha de Nacimiento</label>
+                            <input type="date" class="form-control form-control-chronos" id="dateOfBirth">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="photoCapture" class="form-label">Fotografía</label>
+                        <div class="row">
+                            <div class="col-md-6 text-center">
+                                <div class="camera-container mb-2">
+                                    <video id="camera" class="d-none w-100 border rounded"></video>
+                                    <canvas id="photoCanvas" class="d-none w-100 border rounded"></canvas>
+                                    <img id="photoPreview" class="w-100 border rounded" src="/images/user-placeholder.png" alt="Vista previa de la foto">
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button type="button" id="btnStartCamera" class="btn btn-sm btn-chronos-outline">
+                                        <i class="bi bi-camera"></i> Cámara
+                                    </button>
+                                    <button type="button" id="btnCapturePhoto" class="btn btn-sm btn-chronos-outline d-none">
+                                        <i class="bi bi-camera"></i> Capturar
+                                    </button>
+                                    <button type="button" id="btnUploadPhoto" class="btn btn-sm btn-chronos-outline">
+                                        <i class="bi bi-upload"></i> Subir
+                                    </button>
+                                    <input type="file" id="photoUpload" class="d-none" accept="image/*">
+                                </div>
+                                <input type="hidden" id="photoBase64">
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i> Puede tomar una foto con la cámara o subir una imagen desde su dispositivo.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-chronos-outline" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-chronos" id="btnSaveVisitor">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Ver Detalles del Visitante -->
+<div class="modal fade" id="visitorDetailsModal" tabindex="-1" aria-labelledby="visitorDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-green text-white">
+                <h5 class="modal-title" id="visitorDetailsModalLabel">Detalles del Visitante</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <img id="detailsPhoto" class="img-fluid rounded mb-3" src="/images/user-placeholder.png" alt="Foto del visitante">
+                        <h5 id="detailsName" class="mb-1"></h5>
+                        <p id="detailsIdentification" class="text-muted"></p>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Empresa:</strong> <span id="detailsCompany"></span></p>
+                                <p><strong>Género:</strong> <span id="detailsGender"></span></p>
+                                <p><strong>Tipo de Sangre:</strong> <span id="detailsBloodType"></span></p>
+                                <p><strong>Fecha de Nacimiento:</strong> <span id="detailsDateOfBirth"></span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Teléfono:</strong> <span id="detailsPhone"></span></p>
+                                <p><strong>Correo:</strong> <span id="detailsEmail"></span></p>
+                                <p><strong>Dirección:</strong> <span id="detailsAddress"></span></p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h6>Registro de Visitas</h6>
+                            <div id="visitorVisitsTable"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-chronos-outline" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-chronos" id="btnEditFromDetails">Editar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- SweetAlert2 para las notificaciones -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/jsvisitor/visitor.js"></script>
+}
