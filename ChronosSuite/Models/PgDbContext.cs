@@ -7,12 +7,13 @@ namespace ChronosSuite.Models;
 
 public partial class PgDbContext : DbContext
 {
-    public PgDbContext()
-    {
-    }
+
     private readonly IConfiguration _configuration;
     private NpgsqlConnection DbConnection { get; }
 
+    public PgDbContext()
+    {
+    }
     public PgDbContext(DbContextOptions<PgDbContext> options, IConfiguration configuration)
             : base(options)
     {
@@ -79,8 +80,8 @@ public partial class PgDbContext : DbContext
             entity.Property(e => e.Position)
                 .HasMaxLength(100)
                 .HasColumnName("position");
-                
-            entity.HasOne(d => d.Company).WithMany()
+
+            entity.HasOne(d => d.Company).WithMany(p => p.Employees)
                 .HasForeignKey(d => d.CompanyId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("employees_company_id_fkey");
@@ -93,11 +94,12 @@ public partial class PgDbContext : DbContext
             entity.ToTable("locations", "company");
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Description)
+                .HasMaxLength(255)
+                .HasColumnName("description");
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
                 .HasColumnName("name");
-            entity.Property(e => e.Description)
-                .HasColumnName("description");
         });
 
         modelBuilder.Entity<User>(entity =>
@@ -135,25 +137,42 @@ public partial class PgDbContext : DbContext
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.AuthorizedEmployeeId).HasColumnName("authorized_employee_id");
             entity.Property(e => e.CarriedObjects).HasColumnName("carried_objects");
-            entity.Property(e => e.LocationId).HasColumnName("location_id");
-            entity.Property(e => e.Photo).HasColumnName("photo");
-            entity.Property(e => e.Timestamp)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+            entity.Property(e => e.CreatedAt)
                 .HasColumnType("timestamp without time zone")
-                .HasColumnName("timestamp");
+                .HasColumnName("created_at");
             entity.Property(e => e.EntryTime)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("entry_time");
             entity.Property(e => e.ExitTime)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("exit_time");
+            entity.Property(e => e.HasEntered)
+                .HasDefaultValue(false)
+                .HasComment("Indica si el visitante ya registró su entrada")
+                .HasColumnName("has_entered");
             entity.Property(e => e.HasExited)
                 .HasDefaultValue(false)
                 .HasColumnName("has_exited");
+            entity.Property(e => e.IsImmediateVisit).HasColumnName("is_immediate_visit");
+            entity.Property(e => e.LocationId).HasColumnName("location_id");
+            entity.Property(e => e.ReportDescription).HasColumnName("report_description");
             entity.Property(e => e.ReportFlag)
                 .HasDefaultValue(false)
                 .HasColumnName("report_flag");
+            entity.Property(e => e.ScheduledEntryTime)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("scheduled_entry_time");
+            entity.Property(e => e.ScheduledExitTime)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("scheduled_exit_time");
+            entity.Property(e => e.UpdatedAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("updated_at");
             entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.VisitPurpose)
+                .HasMaxLength(100)
+                .HasComment("Propósito principal de la visita")
+                .HasColumnName("visit_purpose");
             entity.Property(e => e.VisitorId).HasColumnName("visitor_id");
 
             entity.HasOne(d => d.AuthorizedEmployee).WithMany(p => p.VisitRecords)
@@ -173,7 +192,6 @@ public partial class PgDbContext : DbContext
 
             entity.HasOne(d => d.Visitor).WithMany(p => p.VisitRecords)
                 .HasForeignKey(d => d.VisitorId)
-                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("visit_records_visitor_id_fkey");
         });
 

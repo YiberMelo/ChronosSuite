@@ -5,7 +5,7 @@ namespace ChronosSuite.Models;
 
 public partial class Visitor
 {
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     public string FirstName { get; set; } = null!;
 
@@ -13,7 +13,7 @@ public partial class Visitor
 
     public string Identification { get; set; } = null!;
 
-    public int? CompanyId { get; set; }
+    public long? CompanyId { get; set; }
 
     public byte[]? Photo { get; set; }
 

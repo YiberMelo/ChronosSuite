@@ -1,10 +1,15 @@
 using ChronosSuite.Models;
+using ChronosSuite.Models.Dto.Location;
+using DannteV2.Models.Dto.FiltersTable;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using System.Text.Json;
 
 namespace ChronosSuite.Controllers
 {
+    [Authorize]
     public class LocationController : Controller
     {
         private readonly PgDbContext _context;
@@ -14,140 +19,87 @@ namespace ChronosSuite.Controllers
             _context = context;
         }
 
-        // GET: Location
         public IActionResult Index()
         {
+            ViewBag.Location = "active";
             return View();
         }
 
-        // GET: Location/GetAll
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
-        {
-            try
-            {
-                var locations = await _context.Locations
-                    .Select(l => new
-                    {
-                        l.Id,
-                        l.Name,
-                        l.Description
-                    })
-                    .ToListAsync();
-                
-                return Json(new { success = true, data = locations });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        // POST: Location/Create
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Location location)
+        public IActionResult GetAll([FromBody] TableRequest<FilterLocation>? request)
         {
             try
             {
-                if (ModelState.IsValid)
+                if (request == null || request.filter == null)
+                    return Json(new { success = false, message = "Solicitud inválida." });
+
+                var query = _context.Locations.AsQueryable();
+
+                // Aplicar filtros si están presentes
+                if (!string.IsNullOrEmpty(request.filter.Id))
                 {
-                    // Asegurar que el ID sea 0 para que PostgreSQL genere uno nuevo
-                    location.Id = 0;
-
-                    await _context.Locations.AddAsync(location);
-                    await _context.SaveChangesAsync();
-                    return Json(new { success = true, message = "Ubicación creada correctamente", data = location });
-                }
-                return Json(new { success = false, message = "Error en los datos proporcionados" });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        // GET: Location/GetById/5
-        [HttpGet]
-        public async Task<IActionResult> GetById(int id)
-        {
-            try
-            {
-                var location = await _context.Locations
-                    .Select(l => new
+                    if (long.TryParse(request.filter.Id, out long locationId))
                     {
-                        l.Id,
-                        l.Name,
-                        l.Description
-                    })
-                    .FirstOrDefaultAsync(l => l.Id == id);
-                
-                if (location == null)
-                {
-                    return Json(new { success = false, message = "Ubicación no encontrada" });
-                }
-                return Json(new { success = true, data = location });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
-
-        // POST: Location/Update
-        [HttpPost]
-        public async Task<IActionResult> Update([FromBody] Location location)
-        {
-            try
-            {
-                if (ModelState.IsValid)
-                {
-                    var existingLocation = await _context.Locations.FindAsync(location.Id);
-                    if (existingLocation == null)
-                    {
-                        return Json(new { success = false, message = "Ubicación no encontrada" });
+                        query = query.Where(l => l.Id == locationId);
                     }
-
-                    existingLocation.Name = location.Name;
-                    existingLocation.Description = location.Description;
-                    
-                    _context.Locations.Update(existingLocation);
-                    await _context.SaveChangesAsync();
-                    return Json(new { success = true, message = "Ubicación actualizada correctamente" });
                 }
-                return Json(new { success = false, message = "Error en los datos proporcionados" });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
 
-        // DELETE: Location/Delete/5
-        [HttpDelete]
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var location = await _context.Locations.FindAsync(id);
-                if (location == null)
+                if (!string.IsNullOrEmpty(request.filter.Name))
+                    query = query.Where(l => l.Name.Contains(request.filter.Name));
+
+                if (!string.IsNullOrEmpty(request.filter.Description))
+                    query = query.Where(l => l.Description != null && l.Description.Contains(request.filter.Description));
+
+                // Aplicar ordenamiento
+                if (!string.IsNullOrEmpty(request.sort))
                 {
-                    return Json(new { success = false, message = "Ubicación no encontrada" });
+                    query = request.order == "desc"
+                       ? request.sort.ToLower() switch
+                       {
+                           "id" => query.OrderByDescending(l => l.Id),
+                           "name" => query.OrderByDescending(l => l.Name),
+                           "description" => query.OrderByDescending(l => l.Description),
+                           _ => query.OrderByDescending(l => EF.Property<object>(l, request.sort))
+                       }
+                       : request.sort.ToLower() switch
+                       {
+                           "id" => query.OrderBy(l => l.Id),
+                           "name" => query.OrderBy(l => l.Name),
+                           "description" => query.OrderBy(l => l.Description),
+                           _ => query.OrderBy(l => EF.Property<object>(l, request.sort))
+                       };
                 }
-
-                // Verificar si hay registros de visitas asociados a esta ubicación
-                var hasVisitRecords = await _context.VisitRecords.AnyAsync(vr => vr.LocationId == id);
-                if (hasVisitRecords)
+                else
                 {
-                    return Json(new { success = false, message = "No se puede eliminar la ubicación porque tiene registros de visitas asociados" });
+                    query = query.OrderByDescending(l => l.Id);
                 }
 
-                _context.Locations.Remove(location);
-                await _context.SaveChangesAsync();
-                return Json(new { success = true, message = "Ubicación eliminada correctamente" });
+                // Aplicar paginación y seleccionar resultados
+                var total = query.Count();
+                var locations = query.Skip(request.offset)
+                                 .Take(request.limit)
+                                 .ToList()
+                                 .Select(l => new LocationReadDto
+                                 {
+                                     Id = l.Id,
+                                     Name = l.Name,
+                                     Description = l.Description
+                                 })
+                                 .ToList();
+
+                return Json(new { total, rows = locations });
             }
-            catch (Exception ex)
+            catch (FormatException e)
             {
-                return Json(new { success = false, message = ex.Message });
+                return Json(e.Message);
+            }
+            catch (NpgsqlException e)
+            {
+                return Json(e.Message);
+            }
+            catch (Exception e)
+            {
+                return Json(e.Message);
             }
         }
     }

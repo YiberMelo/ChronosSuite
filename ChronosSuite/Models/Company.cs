@@ -5,9 +5,11 @@ namespace ChronosSuite.Models;
 
 public partial class Company
 {
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     public string Name { get; set; } = null!;
+
+    public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
 
     public virtual ICollection<Visitor> Visitors { get; set; } = new List<Visitor>();
 }

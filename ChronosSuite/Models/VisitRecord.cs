@@ -1,51 +1,57 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ChronosSuite.Models;
 
 public partial class VisitRecord
 {
-    public int Id { get; set; }
+    public long Id { get; set; }
 
-    public int? VisitorId { get; set; }
+    public long VisitorId { get; set; }
 
-    public DateTime? Timestamp { get; set; }
-    
-    [Column("entry_time")]
+    public int UserId { get; set; }
+
+    public long AuthorizedEmployeeId { get; set; }
+
+    public long LocationId { get; set; }
+
+    public string CarriedObjects { get; set; } = null!;
+
     public DateTime? EntryTime { get; set; }
-    
-    [Column("exit_time")]
+
     public DateTime? ExitTime { get; set; }
-    
-    [Column("has_exited")]
+
     public bool HasExited { get; set; }
-    
-    [Column("has_entered")]
-    public bool HasEntered { get; set; }
-    
-    [Column("report_flag")]
+
     public bool ReportFlag { get; set; }
-    
-    [Column("visit_purpose")]
-    public string? VisitPurpose { get; set; }
 
-    public byte[]? Photo { get; set; }
+    /// <summary>
+    /// Indica si el visitante ya registró su entrada
+    /// </summary>
+    public bool HasEntered { get; set; }
 
-    public int? UserId { get; set; }
+    /// <summary>
+    /// Propósito principal de la visita
+    /// </summary>
+    public string VisitPurpose { get; set; } = null!;
 
-    public int? AuthorizedEmployeeId { get; set; }
+    public bool IsImmediateVisit { get; set; }
 
-    public int? LocationId { get; set; }
+    public string? ReportDescription { get; set; }
 
-    [Column("carried_objects")]
-    public string? CarriedObjects { get; set; }
+    public DateTime ScheduledEntryTime { get; set; }
 
-    public virtual Employee? AuthorizedEmployee { get; set; }
+    public DateTime ScheduledExitTime { get; set; }
 
-    public virtual Location? Location { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
-    public virtual User? User { get; set; }
+    public DateTime CreatedAt { get; set; }
 
-    public virtual Visitor? Visitor { get; set; }
+    public virtual Employee AuthorizedEmployee { get; set; } = null!;
+
+    public virtual Location Location { get; set; } = null!;
+
+    public virtual User User { get; set; } = null!;
+
+    public virtual Visitor Visitor { get; set; } = null!;
 }

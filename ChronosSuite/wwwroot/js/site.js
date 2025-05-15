@@ -1,12 +1,19 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+﻿function getFilters(tableId) {
+    let filters = {};
+    $('#' + tableId).find('thead input, thead select').each(function () {
+        let field = $(this).closest('th').data('field');
+        let value = $(this).val();
 
-// Write your JavaScript code.
-/**
- * Script para manejar el cierre de sesión en ChronosSuite
- * Este script se encarga de eliminar el token JWT almacenado en localStorage
- * cuando el usuario cierra sesión.
- */
+        if (value === "true") {
+            filters[field] = true;
+        } else if (value === "false") {
+            filters[field] = false;
+        } else if (value !== null && value !== "") {
+            filters[field] = value;
+        }
+    });
+    return filters;
+}
 
 // Inicializar los event listeners cuando el DOM esté cargado
 document.addEventListener('DOMContentLoaded', function() {
@@ -25,6 +32,54 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+function initSingleVirtualSelect(selector, placeholder,  allowNewOption = false, disabled = false) {
+    VirtualSelect.init({
+        ele: selector,
+        options: [],
+        search: true,
+        disabled: disabled,
+        maxWidth: '100%',
+        placeholder: placeholder,
+        searchPlaceholderText: "Buscar",
+        noSearchResultsText: "Sin resultados",
+        noOptionsText: "Sin datos",
+        allowNewOption: allowNewOption
+    });
+}
+
+function initMultipleVirtualSelect(selector, placeholder, disabled = false) {
+    VirtualSelect.init({
+        ele: selector,
+        options: [],
+        multiple: true,
+        search: true,
+        selectAll: true,
+        showSelectAll: true,
+        showClear: true,
+        disabled: disabled,
+        maxWidth: '100%',
+        placeholder: `Seleccionar ${placeholder}`,
+        searchPlaceholderText: "Buscar",
+        noSearchResultsText: "Sin resultados",
+        noOptionsText: "Sin datos"
+    });
+}
+
+function initSingleDescriptionVirtualSelect(selector, placeholder, disabled = false) {
+    VirtualSelect.init({
+        ele: selector,
+        data: [],
+        search: true,
+        disabled: disabled,
+        maxWidth: '100%',
+        placeholder: placeholder,
+        searchPlaceholderText: "Buscar",
+        noSearchResultsText: "Sin resultados",
+        noOptionsText: "Sin datos",
+        hasOptionDescription: true
+    });
+}
 
 // Script para manejar el toggle del sidebar
 document.addEventListener('DOMContentLoaded', function() {

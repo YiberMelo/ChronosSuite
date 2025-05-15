@@ -7,60 +7,52 @@
     <title>@ViewData["Title"] - ChronosSuite</title>
     <link rel="stylesheet" href="~/css/bootstrap.css" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link href="~/lib/bootstrap-table/bootstrap-table.css" rel="stylesheet" />
+    <link href="~/css/virtual-select.css" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <!-- Tabulator CSS -->
-    <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
 </head>
 
 <body>
     <div class="wrapper">
         <!-- Sidebar -->
-        <div class="sidebar bg-gradient-green">
+        <div class="sidebar gradient-1-90">
             <div class="text-center p-2">
                 <!-- Logo -->
-                <i class="bi bi-clock-history display-4"></i>
+                <img src="~/images/Chronos-negativo.svg" class="img-fluid" alt="" />
             </div>
             <ul class="sidebar-nav">
                 <li class="sidebar-item">
-                    <a href="/Home"
-                        class="sidebar-link @(ViewContext.RouteData.Values["Controller"].ToString() == "Home" && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")">
+                    <a class="sidebar-link text-light @ViewBag.Home" asp-controller="Home" asp-action="Index">
                         <i class="bi bi-house-door"></i>
                         <span>Inicio</span>
                     </a>
                 </li>
                 <li class="sidebar-item">
-                    <a href="/VisitRecord"
-                        class="sidebar-link @(ViewContext.RouteData.Values["Controller"].ToString() == "VisitRecord" ? "active" : "")">
+                    <a class="sidebar-link text-light @ViewBag.VisitRecord" asp-controller="VisitRecord" asp-action="Index">
                         <i class="bi bi-clipboard-check"></i>
                         <span>Registros</span>
                     </a>
                 </li>
                 <li class="sidebar-item">
-                    <a href="/Visitor"
-                        class="sidebar-link @(ViewContext.RouteData.Values["Controller"].ToString() == "Visitor" ? "active" : "")">
+                    <a class="sidebar-link text-light @ViewBag.Visitor" asp-controller="Visitor" asp-action="Index">
                         <i class="bi bi-person-badge"></i>
                         <span>Visitantes</span>
                     </a>
                 </li>
                 <li class="sidebar-item">
-                    <a href="/Company"
-                        class="sidebar-link @(ViewContext.RouteData.Values["Controller"].ToString() == "Company" ? "active" : "")">
+                    <a class="sidebar-link text-light @ViewBag.Company" asp-controller="Company" asp-action="Index">
                         <i class="bi bi-building"></i>
                         <span>Empresas</span>
                     </a>
                 </li>
                 <li class="sidebar-item">
-                    <a href="/Employee"
-                        class="sidebar-link @(ViewContext.RouteData.Values["Controller"].ToString() == "Employee" ? "active" : "")">
+                    <a class="sidebar-link text-light @ViewBag.Employee" asp-controller="Employee" asp-action="Index">
                         <i class="bi bi-people"></i>
                         <span>Empleados</span>
                     </a>
                 </li>
                 <li class="sidebar-item">
-                    <a href="/Location"
-                        class="sidebar-link @(ViewContext.RouteData.Values["Controller"].ToString() == "Location" ? "active" : "")">
+                    <a class="sidebar-link text-light @ViewBag.Location" asp-controller="Location" asp-action="Index">
                         <i class="bi bi-geo-alt"></i>
                         <span>Ubicaciones</span>
                     </a>
@@ -68,18 +60,14 @@
             </ul>
         </div>
 
-        <!-- Main content -->
         <div class="main">
-            <!-- Navbar -->
-            <nav class="navbar navbar-expand-lg navbar-light">
+            <nav class="navbar navbar-expand-lg shadow-lg">
                 <div class="container-fluid">
-                    <!-- Sidebar Toggle Button -->
                     <div class="toggle-btn" type="button" id="sidebarToggle">
                         <i class="bi bi-list fs-4"></i>
                     </div>
 
                     <div class="d-flex ms-auto">
-                        <!-- Dropdown de Usuario -->
                         <div class="dropdown">
                             <a class="btn dropdown-toggle d-flex align-items-center" href="#" role="button"
                                 id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -96,8 +84,7 @@
                 </div>
             </nav>
 
-            <!-- Content -->
-            <div class="content-container">
+            <div class="container-fluid p-3">
                 @RenderBody()
             </div>
         </div>
@@ -105,8 +92,17 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Tabulator JS -->
-    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+   
+    <script src="https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin@1.29.0/tableExport.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.24.0/dist/bootstrap-table.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.24.0/dist/bootstrap-table-locale-all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.24.0/dist/extensions/export/bootstrap-table-export.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.24.0/dist/extensions/filter-control/bootstrap-table-filter-control.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.24.0/extensions/auto-refresh/bootstrap-table-auto-refresh.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/virtual-select-plugin@1.0.49/dist/virtual-select.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     
 

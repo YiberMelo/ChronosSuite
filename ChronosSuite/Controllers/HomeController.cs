@@ -17,6 +17,7 @@ namespace ChronosSuite.Controllers
 
         public IActionResult Index()
         {
+            ViewBag.Home = "active";
             return View();
         }
 

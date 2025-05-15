@@ -1,571 +1,433 @@
-/**
- * Script para manejar la tabla de visitantes utilizando Tabulator
- * Este archivo contiene todas las funciones necesarias para la gestión CRUD de visitantes
- * Autor: ChronosSuite Team
- * Fecha: 30 de abril de 2025
- */
+﻿const btnShowModalVistor = document.getElementById('btnShowModalVistor');
+const modalVistor = new bootstrap.Modal(document.getElementById('modalVistor'));
 
-// Variables globales
-let visitorsTable;
-let isEditing = false;
-let companies = []; // Para almacenar las empresas disponibles
-let stream = null; // Para la cámara web
+const photoContainer = document.getElementById('photoContainer');
 
-// Inicialización cuando el documento está listo
-document.addEventListener('DOMContentLoaded', function() {
-    // Cargar las compañías para el selector
-    loadCompanies();
-    
-    // Inicializar la tabla de visitantes con Tabulator
-    initVisitorsTable();
-    
-    // Event listeners
-    document.getElementById('quickFilter').addEventListener('keyup', filterTable);
-    document.getElementById('btnAddVisitor').addEventListener('click', openCreateVisitorModal);
-    document.getElementById('btnSaveVisitor').addEventListener('click', saveVisitor);
-    document.getElementById('btnStartCamera').addEventListener('click', startCamera);
-    document.getElementById('btnCapturePhoto').addEventListener('click', capturePhoto);
-    document.getElementById('btnUploadPhoto').addEventListener('click', function() {
-        document.getElementById('photoUpload').click();
-    });
-    document.getElementById('photoUpload').addEventListener('change', handlePhotoUpload);
-    document.getElementById('btnEditFromDetails').addEventListener('click', openEditFromDetails);
-    
-    // Cerrar la transmisión de la cámara cuando se cierra el modal
-    document.getElementById('visitorModal').addEventListener('hidden.bs.modal', stopCamera);
-});
+const companySelector = document.getElementById('companySelector');
+const genderSelector = document.getElementById('genderSelector');
+const bloodTypeSelector = document.getElementById('bloodTypeSelector');
 
-/**
- * Carga las empresas desde el servidor para el selector
- */
-function loadCompanies() {
-    fetch('/Company/GetData')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error en la solicitud: ' + response.status);
-            }
-            return response.json();
-        })
-        .then(data => {
-            companies = data;
-            const companySelect = document.getElementById('companyId');
-            companySelect.innerHTML = '<option value="">Seleccione una empresa</option>';
-            
-            companies.forEach(company => {
-                const option = document.createElement('option');
-                option.value = company.id;
-                option.textContent = company.name;
-                companySelect.appendChild(option);
-            });
-        })
-        .catch(error => {
-            console.error('Error al cargar las empresas:', error);
-            showNotification('Error al cargar datos de empresas. Por favor, intente de nuevo.', 'error');
-        });
-}
+const frmVisitor = document.getElementById('frmVisitor');
+const btnSaveVisitor = document.getElementById('btnSaveVisitor');
+const btnUpdateVisitor = document.getElementById('btnUpdateVisitor');
 
-/**
- * Inicializa la tabla Tabulator para mostrar visitantes
- */
-function initVisitorsTable() {
-    visitorsTable = new Tabulator("#visitorsTable", {
-        height: "450px",
-        layout: "fitColumns",
-        responsiveLayout: "collapse",
-        pagination: true,
-        paginationSize: 10,
-        paginationSizeSelector: [5, 10, 20, 50],
-        movableColumns: true,
-        resizableRows: true,
-        initialSort: [
-            { column: "lastName", dir: "asc" }
-        ],
-        columns: [
-            { 
-                title: "Foto", 
-                field: "photoBase64", 
-                formatter: function(cell, formatterParams, onRendered) {
-                    const value = cell.getValue();
-                    if (value) {
-                        return `<img src="data:image/jpeg;base64,${value}" class="visitor-photo" alt="Foto de visitante" />`;
-                    } else {
-                        return `<img src="/images/user-placeholder.png" class="visitor-photo" alt="Sin foto" />`;
-                    }
-                },
-                headerSort: false,
-                width: 80
-            },
-            { title: "Nombre", field: "firstName", sorter: "string", headerFilter: true },
-            { title: "Apellido", field: "lastName", sorter: "string", headerFilter: true },
-            { title: "Identificación", field: "identification", sorter: "string", headerFilter: true },
-            { title: "Empresa", field: "companyName", sorter: "string", headerFilter: true },
-            {
-                title: "Acciones",
-                formatter: function(cell, formatterParams, onRendered) {
-                    return `<div class="text-center">
-                        <button class="btn btn-sm btn-info btn-view-visitor" data-id="${cell.getRow().getData().id}">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                        <button class="btn btn-sm btn-primary ms-1 btn-edit-visitor" data-id="${cell.getRow().getData().id}">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger ms-1 btn-delete-visitor" data-id="${cell.getRow().getData().id}">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>`;
-                },
-                headerSort: false,
-                hozAlign: "center",
-                width: 150
-            }
-        ],
-        ajaxURL: "/Visitor/GetData",
-        ajaxResponse: function(url, params, response) {
-            // Procesamos los datos para mostrar correctamente
-            return response;
-        }
-    });
-    
-    // Event listeners para los botones de acción en la tabla
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.btn-view-visitor')) {
-            const id = e.target.closest('.btn-view-visitor').getAttribute('data-id');
-            openViewVisitorModal(id);
-        } else if (e.target.closest('.btn-edit-visitor')) {
-            const id = e.target.closest('.btn-edit-visitor').getAttribute('data-id');
-            openEditVisitorModal(id);
-        } else if (e.target.closest('.btn-delete-visitor')) {
-            const id = e.target.closest('.btn-delete-visitor').getAttribute('data-id');
-            confirmDeleteVisitor(id);
-        }
-    });
-    
-    // Añadir estilo para las imágenes de los visitantes
-    const style = document.createElement('style');
-    style.innerHTML = `
-        .visitor-photo {
-            width: 40px;
-            height: 40px;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-    `;
-    document.head.appendChild(style);
-}
+initSingleVirtualSelect('#companySelector', 'Seleccionar Empresa');
+initSingleVirtualSelect('#genderSelector', 'Seleccionar el genero');
+initSingleVirtualSelect('#bloodTypeSelector', 'Seleccionar uno');
 
-/**
- * Filtra la tabla según el texto ingresado
- */
-function filterTable() {
-    const value = document.getElementById('quickFilter').value;
-    visitorsTable.setFilter([
-        [
-            { field: "firstName", type: "like", value: value },
-            { field: "lastName", type: "like", value: value },
-            { field: "identification", type: "like", value: value },
-            { field: "companyName", type: "like", value: value }
-        ]
-    ]);
-}
+let idVisitor = {};
 
-/**
- * Abre el modal para crear un nuevo visitante
- */
-function openCreateVisitorModal() {
-    document.getElementById('visitorModalLabel').textContent = 'Nuevo Visitante';
-    
-    // Limpiar el formulario
-    document.getElementById('visitorId').value = '0';
-    document.getElementById('firstName').value = '';
-    document.getElementById('lastName').value = '';
-    document.getElementById('identification').value = '';
-    document.getElementById('companyId').value = '';
-    document.getElementById('gender').value = '';
-    document.getElementById('bloodType').value = '';
-    document.getElementById('phoneNumber').value = '';
-    document.getElementById('email').value = '';
-    document.getElementById('address').value = '';
-    document.getElementById('dateOfBirth').value = '';
-    document.getElementById('photoBase64').value = '';
-    document.getElementById('photoPreview').src = '/images/user-placeholder.png';
-    
-    isEditing = false;
-    
-    // Mostrar el modal
-    const modal = new bootstrap.Modal(document.getElementById('visitorModal'));
-    modal.show();
-}
+async function getImageBase64(imgElement) {
+    const src = imgElement?.src;
 
-/**
- * Abre el modal para editar un visitante existente
- * @param {string} id - ID del visitante a editar
- */
-function openEditVisitorModal(id) {
-    fetch(`/Visitor/GetById?id=${id}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error al obtener los datos del visitante');
-            }
-            return response.json();
-        })
-        .then(response => {
-            if (response.success) {
-                const visitor = response.data;
-                document.getElementById('visitorModalLabel').textContent = 'Editar Visitante';
-                document.getElementById('visitorId').value = visitor.id;
-                document.getElementById('firstName').value = visitor.firstName;
-                document.getElementById('lastName').value = visitor.lastName;
-                document.getElementById('identification').value = visitor.identification;
-                document.getElementById('companyId').value = visitor.companyId || '';
-                document.getElementById('gender').value = visitor.gender || '';
-                document.getElementById('bloodType').value = visitor.bloodType || '';
-                document.getElementById('phoneNumber').value = visitor.phoneNumber || '';
-                document.getElementById('email').value = visitor.email || '';
-                document.getElementById('address').value = visitor.address || '';
-                
-                // Formato de fecha para el input date
-                if (visitor.dateOfBirth) {
-                    const dateParts = visitor.dateOfBirth.split('T')[0];
-                    document.getElementById('dateOfBirth').value = dateParts;
-                } else {
-                    document.getElementById('dateOfBirth').value = '';
-                }
-                
-                // Mostrar la foto si existe
-                if (visitor.photoBase64) {
-                    document.getElementById('photoPreview').src = `data:image/jpeg;base64,${visitor.photoBase64}`;
-                    document.getElementById('photoBase64').value = visitor.photoBase64;
-                } else {
-                    document.getElementById('photoPreview').src = '/images/user-placeholder.png';
-                    document.getElementById('photoBase64').value = '';
-                }
-                
-                isEditing = true;
-                
-                // Mostrar el modal
-                const modal = new bootstrap.Modal(document.getElementById('visitorModal'));
-                modal.show();
-            } else {
-                showNotification('Error: ' + response.message, 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Error al cargar la información del visitante', 'error');
-        });
-}
+    if (!src) throw new Error("La imagen no tiene una fuente válida");
 
-/**
- * Abre el modal para ver los detalles de un visitante
- * @param {string} id - ID del visitante a visualizar
- */
-function openViewVisitorModal(id) {
-    fetch(`/Visitor/GetById?id=${id}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error al obtener los datos del visitante');
-            }
-            return response.json();
-        })
-        .then(response => {
-            if (response.success) {
-                const visitor = response.data;
-                
-                // Llenar datos en el modal de detalles
-                document.getElementById('detailsName').textContent = `${visitor.firstName} ${visitor.lastName}`;
-                document.getElementById('detailsIdentification').textContent = visitor.identification;
-                document.getElementById('detailsCompany').textContent = visitor.companyName || 'No especificada';
-                document.getElementById('detailsGender').textContent = visitor.gender || 'No especificado';
-                document.getElementById('detailsBloodType').textContent = visitor.bloodType || 'No especificado';
-                document.getElementById('detailsPhone').textContent = visitor.phoneNumber || 'No especificado';
-                document.getElementById('detailsEmail').textContent = visitor.email || 'No especificado';
-                document.getElementById('detailsAddress').textContent = visitor.address || 'No especificado';
-                
-                // Formatear la fecha de nacimiento
-                if (visitor.dateOfBirth) {
-                    const date = new Date(visitor.dateOfBirth);
-                    document.getElementById('detailsDateOfBirth').textContent = date.toLocaleDateString();
-                } else {
-                    document.getElementById('detailsDateOfBirth').textContent = 'No especificado';
-                }
-                
-                // Mostrar la foto si existe
-                if (visitor.photoBase64) {
-                    document.getElementById('detailsPhoto').src = `data:image/jpeg;base64,${visitor.photoBase64}`;
-                } else {
-                    document.getElementById('detailsPhoto').src = '/images/user-placeholder.png';
-                }
-                
-                // Para abrir el modal de edición desde el de detalles
-                document.getElementById('btnEditFromDetails').setAttribute('data-id', visitor.id);
-                
-                // TODO: En el futuro, cargar el historial de visitas del visitante
-                
-                // Mostrar el modal
-                const modal = new bootstrap.Modal(document.getElementById('visitorDetailsModal'));
-                modal.show();
-            } else {
-                showNotification('Error: ' + response.message, 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Error al cargar la información del visitante', 'error');
-        });
-}
-
-/**
- * Abre el modal de edición desde el modal de detalles
- */
-function openEditFromDetails() {
-    const id = document.getElementById('btnEditFromDetails').getAttribute('data-id');
-    // Cerrar el modal de detalles
-    bootstrap.Modal.getInstance(document.getElementById('visitorDetailsModal')).hide();
-    // Abrir el modal de edición
-    openEditVisitorModal(id);
-}
-
-/**
- * Inicia la cámara para tomar una foto
- */
-function startCamera() {
-    const camera = document.getElementById('camera');
-    const photoPreview = document.getElementById('photoPreview');
-    const btnStartCamera = document.getElementById('btnStartCamera');
-    const btnCapturePhoto = document.getElementById('btnCapturePhoto');
-    
-    // Ocultar la vista previa y mostrar la cámara
-    photoPreview.classList.add('d-none');
-    camera.classList.remove('d-none');
-    btnStartCamera.classList.add('d-none');
-    btnCapturePhoto.classList.remove('d-none');
-    
-    // Iniciar la cámara
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function(videoStream) {
-                stream = videoStream;
-                camera.srcObject = stream;
-                camera.play();
-            })
-            .catch(function(error) {
-                console.error('Error al acceder a la cámara:', error);
-                showNotification('Error al acceder a la cámara. Por favor, verifique los permisos.', 'error');
-                stopCamera();
-            });
-    } else {
-        showNotification('Su navegador no soporta acceso a la cámara.', 'error');
-        stopCamera();
+    // Si ya es Base64
+    if (src.startsWith('data:image/')) {
+        return src.split(",")[1];
     }
-}
 
-/**
- * Detiene la transmisión de la cámara
- */
-function stopCamera() {
-    const camera = document.getElementById('camera');
-    const photoPreview = document.getElementById('photoPreview');
-    const btnStartCamera = document.getElementById('btnStartCamera');
-    const btnCapturePhoto = document.getElementById('btnCapturePhoto');
-    const photoCanvas = document.getElementById('photoCanvas');
-    
-    // Detener la transmisión si existe
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
+    // Convertir imagen desde URL
+    const response = await fetch(src);
+    if (!response.ok) {
+        throw new Error('No se pudo cargar la imagen');
     }
-    
-    // Restablecer la interfaz
-    camera.classList.add('d-none');
-    photoCanvas.classList.add('d-none');
-    photoPreview.classList.remove('d-none');
-    btnCapturePhoto.classList.add('d-none');
-    btnStartCamera.classList.remove('d-none');
-}
 
-/**
- * Captura una foto de la cámara
- */
-function capturePhoto() {
-    const camera = document.getElementById('camera');
-    const photoCanvas = document.getElementById('photoCanvas');
-    const photoPreview = document.getElementById('photoPreview');
-    const photoBase64 = document.getElementById('photoBase64');
-    
-    // Tomar la foto
-    const context = photoCanvas.getContext('2d');
-    photoCanvas.width = camera.videoWidth;
-    photoCanvas.height = camera.videoHeight;
-    context.drawImage(camera, 0, 0, photoCanvas.width, photoCanvas.height);
-    
-    // Convertir a base64 y guardar en el campo oculto
-    const dataURL = photoCanvas.toDataURL('image/jpeg');
-    photoBase64.value = dataURL.split(',')[1]; // Guardar sin el prefijo
-    
-    // Mostrar la vista previa
-    photoPreview.src = dataURL;
-    photoPreview.classList.remove('d-none');
-    photoCanvas.classList.add('d-none');
-    camera.classList.add('d-none');
-    
-    // Detener la cámara
-    stopCamera();
-}
+    const blob = await response.blob();
 
-/**
- * Maneja la carga de una imagen desde el dispositivo
- */
-function handlePhotoUpload(event) {
-    const file = event.target.files[0];
-    if (file) {
+    return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('photoPreview').src = e.target.result;
-            document.getElementById('photoBase64').value = e.target.result.split(',')[1];
+        reader.onloadend = () => {
+            const base64String = reader.result.split(",")[1];
+            resolve(base64String);
         };
-        reader.readAsDataURL(file);
-    }
-}
-
-/**
- * Guarda un visitante (crear o actualizar)
- */
-function saveVisitor() {
-    // Validar el formulario
-    const visitorForm = document.getElementById('visitorForm');
-    if (!visitorForm.checkValidity()) {
-        visitorForm.reportValidity();
-        return;
-    }
-    
-    // Recopilar datos del formulario
-    const visitorId = document.getElementById('visitorId').value;
-    const firstName = document.getElementById('firstName').value.trim();
-    const lastName = document.getElementById('lastName').value.trim();
-    const identification = document.getElementById('identification').value.trim();
-    const companyId = document.getElementById('companyId').value;
-    const gender = document.getElementById('gender').value;
-    const bloodType = document.getElementById('bloodType').value;
-    const phoneNumber = document.getElementById('phoneNumber').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const address = document.getElementById('address').value.trim();
-    const dateOfBirth = document.getElementById('dateOfBirth').value;
-    const photoBase64 = document.getElementById('photoBase64').value;
-    
-    // Preparar datos para enviar
-    const visitorData = {
-        id: parseInt(visitorId) || 0,
-        firstName: firstName,
-        lastName: lastName,
-        identification: identification,
-        companyId: companyId ? parseInt(companyId) : null,
-        gender: gender || null,
-        bloodType: bloodType || null,
-        phoneNumber: phoneNumber || null,
-        email: email || null,
-        address: address || null,
-        dateOfBirth: dateOfBirth || null,
-        photoBase64: photoBase64 || null
-    };
-    
-    // Determinar si es creación o actualización
-    const isNew = visitorId === '0' || !visitorId;
-    const url = isNew ? '/Visitor/Create' : '/Visitor/Update';
-    
-    // Enviar petición al servidor
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(visitorData)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Error en la solicitud: ' + response.status);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            // Cerrar el modal
-            bootstrap.Modal.getInstance(document.getElementById('visitorModal')).hide();
-            
-            // Mostrar mensaje de éxito
-            showNotification(isNew ? 'Visitante creado con éxito.' : 'Visitante actualizado con éxito.', 'success');
-            
-            // Recargar la tabla
-            visitorsTable.setData('/Visitor/GetData');
-        } else {
-            showNotification('Error: ' + data.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error al guardar el visitante:', error);
-        showNotification('Error al guardar los datos. Por favor, intente de nuevo.', 'error');
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(blob);
     });
 }
 
-/**
- * Confirma la eliminación de un visitante
- * @param {string} id - ID del visitante a eliminar
- */
-function confirmDeleteVisitor(id) {
+function selectors() {
+    var optionsGender = [
+        { label: "MASCULINO", value: "MASCULINO" },
+        { label: "FEMENINO", value: "FEMENINO" },
+        { label: "PREFIERO NO DECIR", value: "PREFIERO NO DECIR" }
+    ]
+
+    genderSelector.setOptions(optionsGender);
+
+    var optionsBloodType = [
+        { label: "O+", value: "O+" },
+        { label: "O-", value: "O-" },
+        { label: "A+", value: "A+" },
+        { label: "A-", value: "A-" },
+        { label: "B+", value: "B+" },
+        { label: "B-", value: "B-" },
+        { label: "AB+", value: "AB+" },
+        { label: "AB-", value: "AB-" }
+    ];
+
+    bloodTypeSelector.setOptions(optionsBloodType);
+}
+
+function GetListCompany() {
+    $.ajax({
+        url: '/Company/GetList',
+        method: 'GET',
+        dataType: 'json',
+        success: function (data) {
+            companySelector.setOptions(data);
+        },
+    });
+}
+
+function getAllVisitors() {
+    const columnsVisitors = [
+        {
+            field: 'photo',
+            title: 'Foto',
+            align: 'center',
+            formatter: function (value) {
+                return `<img src="data:image/jpeg;base64,${value}" alt="Foto" class="img-fluid rounded-pill" style="width: 50px; height: 50px;" />`;
+            },
+            width: 100
+        },
+        { field: 'identification', title: 'Identificación', sortable: true, filterControl: 'input', align: 'center' },
+        { field: 'firstName', title: 'Nombre', sortable: true, filterControl: 'input', align: 'center' },
+        { field: 'lastName', title: 'Apellido', sortable: true, filterControl: 'input', align: 'center' },
+        { field: 'company', title: 'Empresa', sortable: true, filterControl: 'input', align: 'center' },
+        { field: 'gender', title: 'Género', sortable: true, filterControl: 'input', align: 'center' },
+        { field: 'bloodType', title: 'Tipo de Sangre', sortable: true, filterControl: 'input', align: 'center' },
+        { field: 'phoneNumber', title: 'Teléfono', sortable: true, filterControl: 'input', align: 'center' },
+        { field: 'email', title: 'Correo Electrónico', sortable: true, filterControl: 'input', align: 'center' },
+        { field: 'address', title: 'Dirección', sortable: true, filterControl: 'input', align: 'center' },
+        { field: 'dateOfBirth', title: 'Fecha de Nacimiento', sortable: false, align: 'center' },
+        {
+            field: 'actions',
+            title: 'Acciones',
+            align: 'center',
+            formatter: function (value, row) {
+                return `
+                    <button class="btn btn-warning btn-sm" onclick="getById('${row.id}')">
+                        <i class="bi bi-pencil-fill"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteVisitor('${row.id}')">
+                        <i class="bi bi-trash-fill"></i>
+                    </button>
+                `;
+            },
+            searchable: false,
+            sortable: false,
+            filterControl: false
+        }
+    ];
+
+    $('#tbAllvisitors').bootstrapTable({
+        locale: 'es-MX',
+        url: '/Visitor/GetAll',
+        method: 'post',
+        columns: columnsVisitors,
+        pagination: true,
+        sidePagination: 'server',
+        showRefresh: true,
+        showExport: true,
+        showToggle: true,
+        showFullscreen: true,
+        showColumns: true,
+        showColumnsToggleAll: true,
+        pageSize: 10,
+        pageList: [10, 25, 50, 100],
+        showPaginationSwitch: true,
+        sortable: true,
+        filterControl: true,
+        filterDatepickerOptions: true,
+        queryParams: function (params) {
+            return {
+                limit: params.limit,
+                offset: params.offset,
+                sort: params.sort,
+                order: params.order,
+                search: params.search,
+                filter: getFilters('tbAllvisitors')
+            };
+        },
+        responseHandler: function (res) {
+            console.log('JSON recibido:', res);
+            return res;
+        }
+    });
+}
+
+function getById(id) {
+    $.ajax({
+        url: `${'/Visitor/GetById'}?id=${id}`,
+        type: 'GET',
+        dataType: 'json',
+        success: function (data) {
+            frmVisitor.reset();
+            idVisitor = data.visitor.id;
+
+            photoContainer.src = data.visitor.photo;
+            companySelector.setValue(data.visitor.companyId);
+            genderSelector.setValue(data.visitor.gender);
+            bloodTypeSelector.setValue(data.visitor.bloodType);
+
+            frmVisitor.querySelectorAll("input[name], select[name], textarea[name]").forEach(element => {
+                const fieldName = element.name;
+
+                if (data.visitor.hasOwnProperty(fieldName)) {
+                    const value = data.visitor[fieldName];
+                    if (element.tagName === "SELECT") {
+                        element.value = value;
+                        element.dispatchEvent(new Event('change'));
+                    } else {
+                        element.value = value;
+                    }
+                }
+            });
+
+            btnSaveVisitor.classList.add('d-none');
+            btnUpdateVisitor.classList.remove('d-none');
+            modalVistor.show();
+        },
+        error: function () {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error al cargar datos',
+                showConfirmButton: false,
+                timer: 2500
+            });
+        }
+    });
+}
+
+function deleteVisitor(id) {
     Swal.fire({
-        title: '¿Está seguro?',
-        text: '¿Desea eliminar este visitante? Esta acción no se puede deshacer.',
+        title: '¿Estás seguro?',
+        text: "No podrás revertir esta acción.",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
+        confirmButtonColor: '#ff6b6b',
+        cancelButtonColor: '#006a6a',
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
-            deleteVisitor(id);
+            $.ajax({
+                type: "delete",
+                url: `${'/Visitor/Delete'}?id=${id}`,
+                contentType: "application/json",
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Eliminado',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 2500
+                        });
+                        $('#tbAllvisitors').bootstrapTable('refresh');
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 2500
+                        });
+                    }
+                },
+                error: function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo eliminar el visitante. Inténtalo de nuevo.'
+                    });
+                }
+            });
         }
     });
 }
 
-/**
- * Elimina un visitante
- * @param {string} id - ID del visitante a eliminar
- */
-function deleteVisitor(id) {
-    fetch(`/Visitor/Delete?id=${id}`, {
-        method: 'DELETE'
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Error en la solicitud: ' + response.status);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            showNotification('Visitante eliminado con éxito.', 'success');
-            visitorsTable.setData('/Visitor/GetData');
-        } else {
-            showNotification('Error: ' + data.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error al eliminar el visitante:', error);
-        showNotification('Error al eliminar los datos. Por favor, intente de nuevo.', 'error');
-    });
-}
+document.addEventListener('DOMContentLoaded', function () {
+    getAllVisitors();
+    selectors();
+    GetListCompany();
 
-/**
- * Muestra notificaciones al usuario usando SweetAlert2
- * @param {string} message - Mensaje a mostrar
- * @param {string} type - Tipo de notificación (success, error, warning, info)
- */
-function showNotification(message, type) {
-    Swal.fire({
-        title: type === 'error' ? 'Error' : type === 'warning' ? 'Advertencia' : 'Éxito',
-        text: message,
-        icon: type,
-        confirmButtonColor: '#43a047',
-        confirmButtonText: 'Aceptar'
+    btnShowModalVistor.addEventListener('click', function () {
+        frmVisitor.reset();
+        photoContainer.src = '/images/Chronos.png';
+        btnSaveVisitor.classList.remove('d-none');
+        btnUpdateVisitor.classList.add('d-none');
+        modalVistor.show();
     });
-}
+
+    btnSaveVisitor.addEventListener('click', async function () {
+        const img = document.getElementById('photoContainer');
+        let photo = '';
+
+        try {
+            photo = await getImageBase64(img);
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al procesar la imagen',
+                text: error.message || 'No se pudo convertir la imagen a Base64.'
+            });
+            return;
+        }
+        const visitorData = {
+            CompanyId: companySelector.value,
+            Gender: genderSelector.value,
+            BloodType: bloodTypeSelector.value,
+            Photo: photo
+        };
+
+        frmVisitor.querySelectorAll('input, select, textarea').forEach((element) => {
+            if (element.name && element.name.trim() !== "") {
+                let value = element.value.trim();
+
+                if (element.name !== 'name' && element.name !== 'email') {
+                    value = value.toUpperCase();
+                }
+
+                if (value.toLowerCase() === 'true') {
+                    value = true;
+                } else if (value.toLowerCase() === 'false') {
+                    value = false;
+                }
+
+                visitorData[element.name] = value;
+            }
+        });
+
+        Swal.fire({
+            title: 'Cargando...',
+            text: 'Por favor, espere mientras se crea el visitante.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        $.ajax({
+            type: "Post",
+            url: '/Visitor/Save',
+            data: JSON.stringify(visitorData),
+            contentType: "application/json",
+            dataType: "json",
+            success: function (response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Éxito',
+                        text: response.message,
+                        showConfirmButton: false,
+                        timer: 2500
+                    })
+
+                    $('#tbAllvisitors').bootstrapTable('refresh');
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: response.message,
+                    });
+                }
+            },
+            error: function (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Hubo un problema al guardar el visitante. Por favor, inténtelo de nuevo.'
+                });
+            }
+        });
+        modalVistor.hide();
+    })
+
+    btnUpdateVisitor.addEventListener('click', async function () {
+        const img = document.getElementById('photoContainer');
+        let photo = '';
+
+        try {
+            photo = await getImageBase64(img);
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error al procesar la imagen',
+                text: error.message || 'No se pudo convertir la imagen a Base64.'
+            });
+            return;
+        }
+        const visitorData = {
+            Id: idVisitor,
+            CompanyId: companySelector.value,
+            Gender: genderSelector.value,
+            BloodType: bloodTypeSelector.value,
+            Photo: photo
+        };
+
+        frmVisitor.querySelectorAll('input, select, textarea').forEach((element) => {
+            if (element.name && element.name.trim() !== "") {
+                let value = element.value.trim();
+
+                if (element.name !== 'name' && element.name !== 'email') {
+                    value = value.toUpperCase();
+                }
+
+                if (value.toLowerCase() === 'true') {
+                    value = true;
+                } else if (value.toLowerCase() === 'false') {
+                    value = false;
+                }
+
+                visitorData[element.name] = value;
+            }
+        });
+
+        Swal.fire({
+            title: 'Cargando...',
+            text: 'Por favor, espere mientras se acualiza el visitante.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        $.ajax({
+            type: "PUT",
+            url: '/Visitor/Update',
+            data: JSON.stringify(visitorData),
+            contentType: "application/json",
+            dataType: "json",
+            success: function (response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Éxito',
+                        text: response.message,
+                        showConfirmButton: false,
+                        timer: 2500
+                    })
+
+                    $('#tbAllvisitors').bootstrapTable('refresh');
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: response.message,
+                    });
+                }
+            },
+            error: function (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Hubo un problema al actualizar el visitante. Por favor, inténtelo de nuevo.'
+                });
+            }
+        });
+        modalVistor.hide();
+    })
+});

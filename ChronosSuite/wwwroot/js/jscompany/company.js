@@ -1,249 +1,270 @@
-/**
- * Script para manejar la tabla de empresas utilizando Tabulator
- * Este archivo contiene todas las funciones necesarias para la gestión CRUD de empresas
- * Autor: ChronosSuite Team
- * Fecha: 29 de abril de 2025
- */
+const btnShowModalCompany = document.getElementById('btnShowModalCompany');
+const modalCompany = new bootstrap.Modal(document.getElementById('modalCompany'));
+const frmCompany = document.getElementById('frmCompany');
+const btnSaveCompany = document.getElementById('btnSaveCompany');
+const btnUpdateCompany = document.getElementById('btnUpdateCompany');
 
-// Variables globales
-let companyTable;
-let isEditing = false;
+let idCompany = 0;
 
-// Ejecutar cuando el DOM esté cargado
-document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar la tabla de empresas con Tabulator
-    initCompanyTable();
-    
-    // Cargar datos de las empresas
-    loadCompanies();
-    
-    // Event listeners
-    document.getElementById('quickFilter').addEventListener('keyup', filterTable);
-    document.getElementById('btnAddCompany').addEventListener('click', showAddCompanyModal);
-    document.getElementById('btnSaveCompany').addEventListener('click', saveCompany);
-});
+function getAllCompanies() {
+    const columnsCompanies = [
+        { field: 'id', title: 'ID', sortable: true, filterControl: 'input', align: 'center' },
+        { field: 'name', title: 'Nombre', sortable: true, filterControl: 'input', align: 'center' },
+        {
+            field: 'actions',
+            title: 'Acciones',
+            align: 'center',
+            formatter: function (value, row) {
+                return `
+                    <button class="btn btn-warning btn-sm" onclick="getById('${row.id}')">
+                        <i class="bi bi-pencil-fill"></i>
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteCompany('${row.id}')">
+                        <i class="bi bi-trash-fill"></i>
+                    </button>
+                `;
+            },
+            searchable: false,
+            sortable: false,
+            filterControl: false
+        }
+    ];
 
-/**
- * Inicializa la tabla Tabulator para mostrar empresas
- */
-function initCompanyTable() {
-    companyTable = new Tabulator("#companiesTable", {
-        height: "450px",
-        layout: "fitColumns",
-        responsiveLayout: "collapse",
+    $('#tbAllCompanies').bootstrapTable({
+        locale: 'es-MX',
+        url: '/Company/GetAll',
+        method: 'post',
+        columns: columnsCompanies,
         pagination: true,
-        paginationSize: 10,
-        paginationSizeSelector: [5, 10, 20, 50],
-        movableColumns: true,
-        resizableRows: true,
-        initialSort: [
-            { column: "name", dir: "asc" }
-        ],
-        columns: [
-            { title: "ID", field: "id", sorter: "number", headerFilter: true, width: 80 },
-            { title: "Nombre", field: "name", sorter: "string", headerFilter: true, widthGrow: 3 },
-            {
-                title: "Acciones",
-                formatter: function(cell, formatterParams, onRendered) {
-                    return `<div class="text-center">
-                        <button class="btn btn-sm btn-info btn-edit-company" data-id="${cell.getRow().getData().id}">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger ms-2 btn-delete-company" data-id="${cell.getRow().getData().id}">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>`;
-                },
-                headerSort: false,
-                hozAlign: "center",
-                width: 150
-            }
-        ],
-        rowClick: function(e, row) {
-            // Opcional: acciones al hacer clic en una fila
-        }
-    });
-    
-    // Event listeners para los botones de acción
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.btn-edit-company')) {
-            const id = e.target.closest('.btn-edit-company').getAttribute('data-id');
-            editCompany(id);
-        } else if (e.target.closest('.btn-delete-company')) {
-            const id = e.target.closest('.btn-delete-company').getAttribute('data-id');
-            confirmDeleteCompany(id);
-        }
-    });
-}
-
-/**
- * Carga las empresas desde el servidor
- */
-function loadCompanies() {
-    fetch('/Company/GetData')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error en la solicitud: ' + response.status);
-            }
-            return response.json();
-        })
-        .then(data => {
-            companyTable.setData(data);
-        })
-        .catch(error => {
-            console.error('Error al cargar las empresas:', error);
-            showNotification('Error al cargar los datos. Por favor, intente de nuevo.', 'error');
-        });
-}
-
-/**
- * Filtra la tabla según el texto ingresado
- */
-function filterTable() {
-    const value = document.getElementById('quickFilter').value;
-    companyTable.setFilter([
-        { field: "name", type: "like", value: value }
-    ]);
-}
-
-/**
- * Muestra el modal para agregar una nueva empresa
- */
-function showAddCompanyModal() {
-    document.getElementById('companyModalLabel').textContent = 'Nueva Empresa';
-    document.getElementById('companyId').value = '0';
-    document.getElementById('companyName').value = '';
-    isEditing = false;
-    
-    const modal = new bootstrap.Modal(document.getElementById('companyModal'));
-    modal.show();
-}
-
-/**
- * Muestra el modal para editar una empresa existente
- * @param {string} id - ID de la empresa a editar
- */
-function editCompany(id) {
-    const company = companyTable.getData().find(c => c.id == id);
-    if (company) {
-        document.getElementById('companyModalLabel').textContent = 'Editar Empresa';
-        document.getElementById('companyId').value = company.id;
-        document.getElementById('companyName').value = company.name;
-        isEditing = true;
-        
-        const modal = new bootstrap.Modal(document.getElementById('companyModal'));
-        modal.show();
-    }
-}
-
-/**
- * Guarda una empresa (crear o actualizar)
- */
-function saveCompany() {
-    const id = parseInt(document.getElementById('companyId').value) || 0;
-    const name = document.getElementById('companyName').value.trim();
-    
-    if (!name) {
-        showNotification('El nombre de la empresa es obligatorio.', 'warning');
-        return;
-    }
-    
-    const company = {
-        id: id,
-        name: name
-    };
-    
-    const url = isEditing ? '/Company/Edit' : '/Company/Create';
-    const method = isEditing ? 'PUT' : 'POST';
-    
-    fetch(url, {
-        method: method,
-        headers: {
-            'Content-Type': 'application/json'
+        sidePagination: 'server',
+        showRefresh: true,
+        showExport: true,
+        showToggle: true,
+        showFullscreen: true,
+        showColumns: true,
+        showColumnsToggleAll: true,
+        pageSize: 10,
+        pageList: [10, 25, 50, 100],
+        showPaginationSwitch: true,
+        sortable: true,
+        filterControl: true,
+        filterDatepickerOptions: true,
+        queryParams: function (params) {
+            return {
+                limit: params.limit,
+                offset: params.offset,
+                sort: params.sort,
+                order: params.order,
+                search: params.search,
+                filter: getFilters('tbAllCompanies')
+            };
         },
-        body: JSON.stringify(company)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Error en la solicitud: ' + response.status);
+        responseHandler: function (res) {
+            console.log('JSON recibido:', res);
+            return res;
         }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            bootstrap.Modal.getInstance(document.getElementById('companyModal')).hide();
-            showNotification(isEditing ? 'Empresa actualizada con éxito.' : 'Empresa creada con éxito.', 'success');
-            loadCompanies();
-        } else {
-            showNotification('Error: ' + data.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error al guardar la empresa:', error);
-        showNotification('Error al guardar los datos. Por favor, intente de nuevo.', 'error');
     });
 }
 
-/**
- * Confirma la eliminación de una empresa
- * @param {string} id - ID de la empresa a eliminar
- */
-function confirmDeleteCompany(id) {
+function getById(id) {
+    $.ajax({
+        url: `${'/Company/GetById'}?id=${id}`,
+        type: 'GET',
+        dataType: 'json',
+        success: function (data) {
+            frmCompany.reset();
+            idCompany = data.company.id;
+
+            frmCompany.querySelectorAll("input[name], select[name], textarea[name]").forEach(element => {
+                const fieldName = element.name;
+
+                if (data.company.hasOwnProperty(fieldName.toLowerCase())) {
+                    const value = data.company[fieldName.toLowerCase()];
+                    if (element.tagName === "SELECT") {
+                        element.value = value;
+                        element.dispatchEvent(new Event('change'));
+                    } else {
+                        element.value = value;
+                    }
+                }
+            });
+
+            btnSaveCompany.classList.add('d-none');
+            btnUpdateCompany.classList.remove('d-none');
+            modalCompany.show();
+        },
+        error: function () {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error al cargar datos',
+                showConfirmButton: false,
+                timer: 2500
+            });
+        }
+    });
+}
+
+function deleteCompany(id) {
     Swal.fire({
-        title: '¿Está seguro?',
-        text: '¿Desea eliminar esta empresa? Esta acción no se puede deshacer.',
+        title: '¿Estás seguro?',
+        text: "No podrás revertir esta acción.",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#3085d6',
+        confirmButtonColor: '#ff6b6b',
+        cancelButtonColor: '#006a6a',
         confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar'
     }).then((result) => {
         if (result.isConfirmed) {
-            deleteCompany(id);
+            $.ajax({
+                type: "delete",
+                url: `${'/Company/Delete'}?id=${id}`,
+                contentType: "application/json",
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Eliminado',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 2500
+                        });
+                        $('#tbAllCompanies').bootstrapTable('refresh');
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 2500
+                        });
+                    }
+                },
+                error: function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo eliminar la empresa. Inténtalo de nuevo.'
+                    });
+                }
+            });
         }
     });
 }
 
-/**
- * Elimina una empresa
- * @param {string} id - ID de la empresa a eliminar
- */
-function deleteCompany(id) {
-    fetch(`/Company/Delete?id=${id}`, {
-        method: 'DELETE'
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Error en la solicitud: ' + response.status);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            showNotification('Empresa eliminada con éxito.', 'success');
-            loadCompanies();
-        } else {
-            showNotification('Error: ' + data.message, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Error al eliminar la empresa:', error);
-        showNotification('Error al eliminar los datos. Por favor, intente de nuevo.', 'error');
-    });
-}
+document.addEventListener('DOMContentLoaded', function () {
+    getAllCompanies();
 
-/**
- * Muestra notificaciones al usuario (usando SweetAlert2)
- * @param {string} message - Mensaje a mostrar
- * @param {string} type - Tipo de notificación (success, error, warning, info)
- */
-function showNotification(message, type) {
-    Swal.fire({
-        title: type === 'error' ? 'Error' : type === 'warning' ? 'Advertencia' : 'Éxito',
-        text: message,
-        icon: type,
-        confirmButtonColor: '#43a047',
-        confirmButtonText: 'Aceptar'
+    btnShowModalCompany.addEventListener('click', function () {
+        frmCompany.reset();
+        idCompany = 0;
+        btnSaveCompany.classList.remove('d-none');
+        btnUpdateCompany.classList.add('d-none');
+        modalCompany.show();
     });
-}
+
+    btnSaveCompany.addEventListener('click', function () {
+        if (!frmCompany.checkValidity()) {
+            frmCompany.reportValidity();
+            return;
+        }
+
+        const companyData = {};
+
+        frmCompany.querySelectorAll('input, select, textarea').forEach((element) => {
+            if (element.name && element.name.trim() !== "") {
+                let value = element.value.trim();
+                companyData[element.name] = value;
+            }
+        });
+
+        $.ajax({
+            type: "POST",
+            url: '/Company/Save',
+            data: JSON.stringify(companyData),
+            contentType: "application/json",
+            success: function (response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Guardado',
+                        text: response.message,
+                        showConfirmButton: false,
+                        timer: 2500
+                    });
+                    $('#tbAllCompanies').bootstrapTable('refresh');
+                    modalCompany.hide();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: response.message,
+                        showConfirmButton: false,
+                        timer: 2500
+                    });
+                }
+            },
+            error: function () {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ha ocurrido un error al guardar los datos. Por favor, inténtelo de nuevo.'
+                });
+            }
+        });
+    });
+
+    btnUpdateCompany.addEventListener('click', function () {
+        if (!frmCompany.checkValidity()) {
+            frmCompany.reportValidity();
+            return;
+        }
+
+        const companyData = {
+            Id: idCompany
+        };
+
+        frmCompany.querySelectorAll('input, select, textarea').forEach((element) => {
+            if (element.name && element.name.trim() !== "") {
+                let value = element.value.trim();
+                companyData[element.name] = value;
+            }
+        });
+
+        $.ajax({
+            type: "PUT",
+            url: '/Company/Update',
+            data: JSON.stringify(companyData),
+            contentType: "application/json",
+            success: function (response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Actualizado',
+                        text: response.message,
+                        showConfirmButton: false,
+                        timer: 2500
+                    });
+                    $('#tbAllCompanies').bootstrapTable('refresh');
+                    modalCompany.hide();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: response.message,
+                        showConfirmButton: false,
+                        timer: 2500
+                    });
+                }
+            },
+            error: function () {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ha ocurrido un error al actualizar los datos. Por favor, inténtelo de nuevo.'
+                });
+            }
+        });
+    });
+});

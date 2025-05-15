@@ -2,255 +2,164 @@
     ViewData["Title"] = "Gestión de Registros";
 }
 
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h2 class="section-title">Gestión de Registros de Visitas</h2>
-        </div>
-        <div class="col-md-4 text-end">
-            <button id="btnAddVisitRecord" class="btn btn-chronos">
-                <i class="bi bi-plus-circle me-2"></i>Nuevo Registro
-            </button>
-        </div>
-    </div>
-
-    <div class="card card-chronos mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Listado de Registros</h5>
-            <div class="input-group input-group-chronos" style="width: 300px;">
-                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                <input type="text" id="quickFilter" class="form-control form-control-chronos" placeholder="Buscar registros...">
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                <label class="fs-4 text-light">Gestión de Registros de Visitas</label>
+                <button id="btnModalVisitRecord" class="btn btn-outline-light">
+                    <i class="bi bi-plus-circle me-2"></i>Nuevo Registro
+                </button>
             </div>
-        </div>
-        <div class="card-body">
-            <div id="visitRecordsTable"></div>
+            <div class="card-body">
+                <table id="tbAllvisitRecords"></table>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Modal para Crear/Editar Registro de Visita -->
-<div class="modal fade" id="visitRecordModal" tabindex="-1" aria-labelledby="visitRecordModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade" id="modalVisitRecord" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-gradient-green text-white">
-                <h5 class="modal-title" id="visitRecordModalLabel">Nuevo Registro de Visita</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-dark text-light d-flex justify-content-between align-items-center p-0 px-3">
+                <label class="modal-title mb-0 fs-5">Datos de la visita</label>
+                <button type="button" class="btn text-light p-0" data-bs-dismiss="modal" aria-label="Cerrar">
+                    <i class="bi bi-x-circle-fill fs-1"></i>
+                </button>
             </div>
             <div class="modal-body">
-                <form id="visitRecordForm">
-                    <input type="hidden" id="visitRecordId" value="0">
-                    
-                    <ul class="nav nav-tabs mb-3" id="visitTabs" role="tablist">
+                <form id="frmVisitRecord">
+                    <!-- Navegación de pestañas -->
+                    <ul class="nav nav-pills mb-3" id="visitTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="visitor-tab" data-bs-toggle="tab" data-bs-target="#visitor-info" type="button" role="tab" aria-controls="visitor-info" aria-selected="true">
-                                <i class="bi bi-person-badge me-1"></i>Visitante
+                            <button class="nav-link active rounded-pill fs-6" id="visitor-tab" data-bs-toggle="tab" data-bs-target="#visitor-info" type="button" role="tab" aria-controls="visitor-info" aria-selected="true">
+                                <i class="bi bi-person-badge me-1"></i> Visitante
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="visit-tab" data-bs-toggle="tab" data-bs-target="#visit-info" type="button" role="tab" aria-controls="visit-info" aria-selected="false">
-                                <i class="bi bi-building me-1"></i>Detalles de Visita
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="photo-tab" data-bs-toggle="tab" data-bs-target="#photo-info" type="button" role="tab" aria-controls="photo-info" aria-selected="false">
-                                <i class="bi bi-camera me-1"></i>Fotografía
+                            <button class="nav-link rounded-pill fs-6" id="visit-tab" data-bs-toggle="tab" data-bs-target="#visit-info" type="button" role="tab" aria-controls="visit-info" aria-selected="false">
+                                <i class="bi bi-building me-1"></i> Detalles de Visita
                             </button>
                         </li>
                     </ul>
-                    
+
                     <div class="tab-content" id="visitTabsContent">
-                        <!-- Pestaña de Información del Visitante -->
+                        <!-- Información del Visitante -->
                         <div class="tab-pane fade show active" id="visitor-info" role="tabpanel" aria-labelledby="visitor-tab">
-                            <div class="card border-0 shadow-sm mb-3">
+                            <div class="card border-0 shadow mb-3">
                                 <div class="card-body">
-                                    <h6 class="card-title mb-3"><i class="bi bi-person-fill me-2"></i>Información del Visitante</h6>
-                                    
-                                    <div class="row mb-3">
-                                        <div class="col-md-12">
-                                            <label for="visitorId" class="form-label">Visitante <span class="text-danger">*</span></label>
-                                            <div class="input-group">
-                                                <span class="input-group-text"><i class="bi bi-person"></i></span>
-                                                <select class="form-select form-select-chronos" id="visitorId" required>
-                                                    <option value="">Seleccione un visitante</option>
-                                                    <!-- Se llenará dinámicamente -->
-                                                </select>
-                                                <button type="button" class="btn btn-outline-secondary" id="btnQuickAddVisitor" title="Agregar nuevo visitante">
-                                                    <i class="bi bi-plus"></i>
-                                                </button>
-                                            </div>
-                                            <small class="text-muted">Si el visitante no está registrado, puede agregarlo rápidamente.</small>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="visitor-preview" id="visitorPreviewContainer" style="display:none;">
-                                                <div class="d-flex align-items-center border rounded p-2 bg-light">
-                                                    <img id="selectedVisitorPhoto" src="/images/user-placeholde.png" alt="Foto del visitante" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
-                                                    <div>
-                                                        <h6 id="selectedVisitorName" class="mb-0">Nombre del Visitante</h6>
-                                                        <small id="selectedVisitorId" class="text-muted">Identificación</small>
-                                                    </div>
-                                                </div>
+                                    <h6 class="card-title mb-3"><i class="bi bi-person-fill me-2"></i> Información del Visitante</h6>
+
+                                    <div class="mb-3">
+                                        <label for="visitorSelector" class="form-label">Visitante <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-info"><i class="bi bi-person"></i></span>
+                                            <div class="flex-grow-1">
+                                                <div id="visitorSelector"></div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Pestaña de Detalles de la Visita -->
+
+                        <!-- Información de la Visita -->
                         <div class="tab-pane fade" id="visit-info" role="tabpanel" aria-labelledby="visit-tab">
-                            <div class="card border-0 shadow-sm mb-3">
+                            <div class="card border-0 shadow mb-3">
                                 <div class="card-body">
-                                    <h6 class="card-title mb-3"><i class="bi bi-building me-2"></i>Información de la Visita</h6>
-                                    
-                                    <div class="row mb-3">
-                                        <div class="col-md-6">
-                                            <label for="locationId" class="form-label">Ubicación <span class="text-danger">*</span></label>
-                                            <div class="input-group">
-                                                <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                                                <select class="form-select form-select-chronos" id="locationId" required>
-                                                    <option value="">Seleccione una ubicación</option>
-                                                    <!-- Se llenará dinámicamente -->
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="authorizedEmployeeId" class="form-label">Empleado autorizado <span class="text-danger">*</span></label>
-                                            <div class="input-group">
-                                                <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
-                                                <select class="form-select form-select-chronos" id="authorizedEmployeeId" required>
-                                                    <option value="">Seleccione un empleado</option>
-                                                    <!-- Se llenará dinámicamente -->
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <h6 class="card-title mb-3"><i class="bi bi-building me-2"></i> Información de la Visita</h6>
 
                                     <div class="row mb-3">
-                                        <div class="col-md-6">
-                                            <label for="visitPurpose" class="form-label">Motivo de la visita <span class="text-danger">*</span></label>
+                                        <div class="col-md-4">
+                                            <label for="locationSelector" class="form-label">Ubicación <span class="text-danger">*</span></label>
                                             <div class="input-group">
-                                                <span class="input-group-text"><i class="bi bi-clipboard-check"></i></span>
-                                                <select class="form-select form-select-chronos" id="visitPurpose" required>
-                                                    <option value="">Seleccione un motivo</option>
-                                                    <option value="Reunión">Reunión</option>
-                                                    <option value="Entrega">Entrega</option>
-                                                    <option value="Mantenimiento">Mantenimiento</option>
-                                                    <option value="Consulta">Consulta</option>
-                                                    <option value="Entrevista">Entrevista</option>
-                                                    <option value="Otro">Otro</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6" id="otherPurposeContainer" style="display: none;">
-                                            <label for="otherPurpose" class="form-label">Especifique el motivo</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text"><i class="bi bi-pencil"></i></span>
-                                                <input type="text" class="form-control form-control-chronos" id="otherPurpose" placeholder="Describa el motivo de la visita">
+                                                <span class="input-group-text bg-info"><i class="bi bi-geo-alt"></i></span>
+                                                <div class="flex-grow-1">
+                                                    <div id="locationSelector"></div>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div class="col-md-6">
-                                            <label for="exitTime" class="form-label">Hora de salida</label>
+                                        <div class="col-md-4">
+                                            <label for="authorizedEmployeeSelector" class="form-label">Empleado autorizado <span class="text-danger">*</span></label>
                                             <div class="input-group">
-                                                <span class="input-group-text"><i class="bi bi-clock"></i></span>
-                                                <input type="datetime-local" class="form-control form-control-chronos" id="exitTime">
+                                                <span class="input-group-text bg-info"><i class="bi bi-person-badge"></i></span>
+                                                <div class="flex-grow-1">
+                                                    <div id="authorizedEmployeeSelector"></div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>                                
-                                    <div class="row mb-3">
-                                        <div class="col-md-12">
-                                            <label for="carriedObjects" class="form-label">Objetos que porta</label>
+
+                                        <div class="col-md-4">
+                                            <label for="visitPurposeSelector" class="form-label">Motivo de la Visita <span class="text-danger">*</span></label>
                                             <div class="input-group">
-                                                <span class="input-group-text"><i class="bi bi-briefcase"></i></span>
-                                                <textarea class="form-control form-control-chronos" id="carriedObjects" rows="3"
-                                                    placeholder="Describa los objetos que porta el visitante (equipos, herramientas, bolsos, etc.)"></textarea>
-                                            </div>
-                                        </div>
-                                    </div>
-                                  
-                                    <div class="row mb-3">
-                                        <div class="col-md-12">
-                                            <label class="form-label">Control de Entrada</label>
-                                            <div class="card border bg-light">
-                                                <div class="card-body py-2">
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" id="isImmediateVisit" checked>
-                                                        <label class="form-check-label" for="isImmediateVisit">Visita inmediata</label>
-                                                    </div>
-                                                    <small class="text-muted">Si está activo, se registrará la entrada con la hora actual.</small>
+                                                <span class="input-group-text bg-info"><i class="bi bi-clipboard-check"></i></span>
+                                                <div class="flex-grow-1">
+                                                    <div id="visitPurposeSelector"></div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                  
-                                    <div class="row mb-3" id="scheduledEntryContainer" style="display: none;">
+
+                                    <div class="row mb-3" id="isImmediateVisitContainer">
                                         <div class="col-md-12">
-                                            <label for="entryTime" class="form-label">Fecha y hora de entrada programada</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
-                                                <input type="datetime-local" class="form-control form-control-chronos" id="entryTime">
+                                            <label class="form-label">Tipo de Visita</label>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="isImmediateVisit" name="isImmediateVisit">
+                                                <label class="form-check-label" for="isImmediateVisit">Visita inmediata</label>
                                             </div>
+                                            <small class="text-muted">Active si el visitante ya está ingresando en este momento.</small>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Pestaña de Fotografía -->
-                        <div class="tab-pane fade" id="photo-info" role="tabpanel" aria-labelledby="photo-tab">
-                            <div class="card border-0 shadow-sm mb-3">
-                                <div class="card-body">
-                                    <h6 class="card-title mb-3"><i class="bi bi-camera-fill me-2"></i>Fotografía del Visitante</h6>
-                                    
-                                    <div class="row">
-                                        <div class="col-md-6 text-center">
-                                            <div class="camera-container mb-3">
-                                                <video id="camera" class="d-none w-100 border rounded shadow-sm" style="max-height:300px;"></video>
-                                                <canvas id="photoCanvas" class="d-none w-100 border rounded shadow-sm" style="max-height:300px;"></canvas>
-                                                <img id="photoPreview" class="w-100 border rounded shadow-sm" src="/images/user-placeholde.png" alt="Vista previa de la foto" style="max-height:300px; object-fit:contain;">
+
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label for="scheduledEntryTime" class="form-label">Fecha y Hora Programada de Entrada</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-info"><i class="bi bi-calendar-event"></i></span>
+                                                <input type="datetime-local" class="form-control" id="scheduledEntryTime" name="scheduledEntryTime">
                                             </div>
-                                            <div class="btn-group" role="group">
-                                                <button type="button" id="btnStartCamera" class="btn btn-sm btn-chronos-outline">
-                                                    <i class="bi bi-camera"></i> Cámara
-                                                </button>
-                                                <button type="button" id="btnCapturePhoto" class="btn btn-sm btn-chronos-outline d-none">
-                                                    <i class="bi bi-camera"></i> Capturar
-                                                </button>
-                                                <button type="button" id="btnUploadPhoto" class="btn btn-sm btn-chronos-outline">
-                                                    <i class="bi bi-upload"></i> Subir
-                                                </button>
-                                                <input type="file" id="photoUpload" class="d-none" accept="image/*">
-                                            </div>
-                                            <input type="hidden" id="photoBase64">
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="alert alert-info">
-                                                <i class="bi bi-info-circle me-2"></i> Instrucciones:
-                                                <ul class="mb-0 mt-2">
-                                                    <li>La fotografía es opcional si el visitante ya tiene una registrada.</li>
-                                                    <li>Puede tomar una foto usando la cámara de su dispositivo.</li>
-                                                    <li>También puede subir una imagen desde su computadora.</li>
-                                                    <li>Para mejores resultados, asegúrese que la imagen muestre claramente el rostro del visitante.</li>
-                                                </ul>
-                                            </div>
-                                            
-
-                                            <div class="form-check mt-3">
-                                                <input class="form-check-input" type="checkbox" id="useVisitorPhoto" checked>
-                                                <label class="form-check-label" for="useVisitorPhoto">
-                                                    Usar foto del perfil del visitante (si está disponible)
-                                                </label>
+                                            <label for="scheduledExitTime" class="form-label">Fecha y Hora Programada de Salida</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-info"><i class="bi bi-clock"></i></span>
+                                                <input type="datetime-local" class="form-control" id="scheduledExitTime" name="scheduledExitTime">
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div class="row mb-3 d-none" id="exactHoursContainer">
+                                        <div class="col-md-6">
+                                            <label for="entryTime" class="form-label">Hora Real de Entrada</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-info"><i class="bi bi-calendar-check"></i></span>
+                                                <input type="datetime-local" class="form-control" id="entryTime" name="entryTime">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="exitTime" class="form-label">Hora Real de Salida</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-info"><i class="bi bi-clock-history"></i></span>
+                                                <input type="datetime-local" class="form-control" id="exitTime" name="exitTime">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="carriedObjects" class="form-label">Objetos que Porta</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-info"><i class="bi bi-briefcase"></i></span>
+                                            <textarea class="form-control" id="carriedObjects" name="carriedObjects" rows="3" placeholder="Equipos, herramientas, maletas, etc."></textarea>
+                                        </div>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
+
+                    <!-- Mensaje de advertencia -->
                     <div class="alert alert-primary mt-3">
                         <div class="d-flex align-items-center">
                             <i class="bi bi-info-circle-fill me-2 fs-4"></i>
@@ -258,100 +167,14 @@
                         </div>
                     </div>
                 </form>
+
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-chronos" id="btnSaveVisitRecord">
+                <button type="button" class="btn btn-dark" id="btnSaveVisitRecord">
                     <i class="bi bi-save me-1"></i> Guardar Registro
                 </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal para Ver Detalles del Registro -->
-<div class="modal fade" id="visitRecordDetailsModal" tabindex="-1" aria-labelledby="visitRecordDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-gradient-green text-white">
-                <h5 class="modal-title" id="visitRecordDetailsModalLabel">Detalles del Registro</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-4 text-center">
-                        <img id="detailsPhoto" class="img-fluid rounded mb-3 shadow" src="/images/user-placeholde.png" alt="Foto del visitante">
-                        <h5 id="detailsVisitorName" class="mb-1"></h5>
-                        <p id="detailsVisitorIdentification" class="text-muted"></p>
-                        
-                        <div class="mt-3">
-                            <div class="badge bg-success mb-2 p-2" id="detailsEntryBadge" style="display: none;">
-                                <i class="bi bi-box-arrow-in-right me-1"></i> Entrada registrada
-                            </div>
-                            <div class="badge bg-danger mb-2 p-2" id="detailsExitBadge" style="display: none;">
-                                <i class="bi bi-box-arrow-right me-1"></i> Salida registrada
-                            </div>
-                            <div class="badge bg-warning mb-2 p-2" id="detailsReportBadge" style="display: none;">
-                                <i class="bi bi-flag-fill me-1"></i> Marcado para reporte
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-8">
-                        <div class="card mb-3 border-0 shadow-sm">
-                            <div class="card-body">
-                                <h6 class="card-title border-bottom pb-2"><i class="bi bi-info-circle me-2"></i>Información del registro</h6>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <p><strong><i class="bi bi-calendar3 me-1"></i> Fecha y hora:</strong> <span id="detailsTimestamp"></span></p>
-                                        <p><strong><i class="bi bi-geo-alt me-1"></i> Ubicación:</strong> <span id="detailsLocation"></span></p>
-                                        <p><strong><i class="bi bi-box-arrow-in-right me-1"></i> Hora de entrada:</strong> <span id="detailsEntryTime"></span></p>
-                                        <p><strong><i class="bi bi-chat-left-text me-1"></i> Motivo de visita:</strong> <span id="detailsVisitPurpose"></span></p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <p><strong><i class="bi bi-person-badge me-1"></i> Empleado autoriza:</strong> <span id="detailsAuthorizedEmployee"></span></p>
-                                        <p><strong><i class="bi bi-person me-1"></i> Registrado por:</strong> <span id="detailsUser"></span></p>
-                                        <p><strong><i class="bi bi-box-arrow-right me-1"></i> Hora de salida:</strong> <span id="detailsExitTime"></span></p>
-                                        <p><strong><i class="bi bi-clock-history me-1"></i> Duración:</strong> <span id="detailsDuration"></span></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-body">
-                                <h6 class="card-title border-bottom pb-2"><i class="bi bi-briefcase me-2"></i>Objetos portados</h6>
-                                <p id="detailsCarriedObjects" class="mb-0"></p>
-                            </div>
-                        </div>
-
-                        <!-- Estado actual y confirmación de salida para visitas activas -->
-                        <div class="card border-0 shadow-sm mt-3" id="activeVisitActions" style="display: none;">
-                            <div class="card-body bg-light border-left-success">
-                                <h6 class="card-title text-success"><i class="bi bi-check-circle-fill me-2"></i>Visita Activa</h6>
-                                <p class="text-muted small">El visitante se encuentra actualmente en las instalaciones.</p>
-                                
-                                <div class="d-grid gap-2">
-                                    <button type="button" class="btn btn-danger" id="btnConfirmExit">
-                                        <i class="bi bi-box-arrow-right me-2"></i>Confirmar Salida
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <div class="btn-group me-auto">
-                    <button type="button" class="btn btn-success" id="btnRegisterExit" style="display: none;">
-                        <i class="bi bi-box-arrow-right me-2"></i>Registrar Salida
-                    </button>
-                    <button type="button" class="btn btn-outline-warning" id="btnToggleReport">
-                        <i class="bi bi-flag me-2"></i><span id="btnReportText">Marcar para Reporte</span>
-                    </button>
-                </div>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <button type="button" class="btn btn-primary" id="btnEditFromDetails">
-                    <i class="bi bi-pencil-square me-1"></i>Editar
+                <button type="button" class="btn btn-dark d-none" id="btnUpdateVisitRecord">
+                    <i class="bi bi-arrow-counterclockwise"></i> Actualizar
                 </button>
             </div>
         </div>
@@ -359,7 +182,6 @@
 </div>
 
 @section Scripts {
-    <!-- SweetAlert2 para las notificaciones -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="~/js/jsvisitrecord/visitrecord.js"></script>
+
+    <script src="~/js/jsvisitrecord/visitRecord.js"></script>
 }
