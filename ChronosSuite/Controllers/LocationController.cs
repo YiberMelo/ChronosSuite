@@ -102,5 +102,34 @@ namespace ChronosSuite.Controllers
                 return Json(e.Message);
             }
         }
+
+        public async Task<IActionResult> GetList()
+        {
+            try
+            {
+                var role = await _context.Locations
+                                            .AsNoTracking()
+                                            .Select(p => new
+                                            {
+                                                value = p.Id,
+                                                label = p.Name
+                                            })
+                                            .ToListAsync();
+                return Json(role);
+            }
+            catch (FormatException e)
+            {
+                return Json(e.Message);
+            }
+            catch (NpgsqlException e)
+            {
+                return Json(e.Message);
+
+            }
+            catch (Exception e)
+            {
+                return Json(e.Message);
+            }
+        }
     }
 }

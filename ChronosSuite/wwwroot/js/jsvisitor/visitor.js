@@ -1,6 +1,9 @@
 ﻿const btnShowModalVistor = document.getElementById('btnShowModalVistor');
 const modalVistor = new bootstrap.Modal(document.getElementById('modalVistor'));
 
+const btnShowModalComanyTb = document.getElementById('btnShowModalComanyTb');
+const modalComanyTb = new bootstrap.Modal(document.getElementById('modalComanyTb'));
+
 const photoContainer = document.getElementById('photoContainer');
 
 const companySelector = document.getElementById('companySelector');
@@ -87,7 +90,11 @@ function getAllVisitors() {
             title: 'Foto',
             align: 'center',
             formatter: function (value) {
-                return `<img src="data:image/jpeg;base64,${value}" alt="Foto" class="img-fluid rounded-pill" style="width: 50px; height: 50px;" />`;
+                if (value == null) {
+                    return `<img src="/images/Chronos.png" alt="Foto" class="img-fluid rounded-pill" style="width: 50px; height: 50px;" />`;
+                } else {
+                    return `<img src="data:image/jpeg;base64,${value}" alt="Foto" class="img-fluid rounded-pill" style="width: 50px; height: 50px;" />`;
+                }
             },
             width: 100
         },
@@ -166,7 +173,12 @@ function getById(id) {
             frmVisitor.reset();
             idVisitor = data.visitor.id;
 
-            photoContainer.src = data.visitor.photo;
+            if (data.visitor.photo == null) {
+                photoContainer.src = '/images/Chronos.png'
+            } else {
+                photoContainer.src = data.visitor.photo;
+            }
+           
             companySelector.setValue(data.visitor.companyId);
             genderSelector.setValue(data.visitor.gender);
             bloodTypeSelector.setValue(data.visitor.bloodType);
@@ -260,6 +272,10 @@ document.addEventListener('DOMContentLoaded', function () {
         btnSaveVisitor.classList.remove('d-none');
         btnUpdateVisitor.classList.add('d-none');
         modalVistor.show();
+    });
+
+    btnShowModalComanyTb.addEventListener('click', function () {
+        modalComanyTb.show();
     });
 
     btnSaveVisitor.addEventListener('click', async function () {

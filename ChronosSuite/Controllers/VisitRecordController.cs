@@ -28,6 +28,7 @@ namespace ChronosSuite.Controllers
         [HttpPost]
         public IActionResult GetAll([FromBody] TableRequest<FilterVisitRecord>? request)
         {
+
             try
             {
                 if (request == null || request.filter == null)
@@ -40,14 +41,6 @@ namespace ChronosSuite.Controllers
                                      .Include(v => v.Visitor)
                                      .AsQueryable();
 
-                if (!string.IsNullOrEmpty(request.filter.CarriedObjects))
-                    query = query.Where(vr => vr.CarriedObjects.Contains(request.filter.CarriedObjects));
-
-                if (!string.IsNullOrEmpty(request.filter.VisitPurpose))
-                    query = query.Where(vr => vr.VisitPurpose.Contains(request.filter.VisitPurpose));
-
-                if (!string.IsNullOrEmpty(request.filter.ReportDescription))
-                    query = query.Where(vr => vr.ReportDescription.Contains(request.filter.ReportDescription));
 
                 if (request.filter.HasExited)
                     query = query.Where(vr => vr.HasExited);
@@ -60,6 +53,13 @@ namespace ChronosSuite.Controllers
 
                 if (request.filter.IsImmediateVisit)
                     query = query.Where(vr => vr.IsImmediateVisit);
+
+                if (!string.IsNullOrEmpty(request.filter.CarriedObjects))
+                    query = query.Where(vr => vr.CarriedObjects.Contains(request.filter.CarriedObjects));
+
+                if (!string.IsNullOrEmpty(request.filter.VisitPurpose))
+                    query = query.Where(vr => vr.VisitPurpose.Contains(request.filter.VisitPurpose));
+
 
                 if (!string.IsNullOrEmpty(request.filter.EntryTime))
                 {
@@ -74,22 +74,6 @@ namespace ChronosSuite.Controllers
                     if (DateTime.TryParse(request.filter.ExitTime, out DateTime exitTimeParsed))
                     {
                         query = query.Where(vr => vr.ExitTime.HasValue && vr.ExitTime.Value.Date == exitTimeParsed.Date);
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(request.filter.ScheduledEntryTime))
-                {
-                    if (DateTime.TryParse(request.filter.ScheduledEntryTime, out DateTime scheduledEntryTimeParsed))
-                    {
-                        query = query.Where(vr => vr.ScheduledEntryTime.Date == scheduledEntryTimeParsed.Date);
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(request.filter.ScheduledExitTime))
-                {
-                    if (DateTime.TryParse(request.filter.ScheduledExitTime, out DateTime scheduledExitTimeParsed))
-                    {
-                        query = query.Where(vr => vr.ScheduledExitTime.Date == scheduledExitTimeParsed.Date);
                     }
                 }
 
@@ -110,8 +94,6 @@ namespace ChronosSuite.Controllers
                     query = query.Where(vr => vr.Location != null && vr.Location.Name.Contains(request.filter.LocationName));
                 }
 
-
-
                 if (!string.IsNullOrEmpty(request.sort))
                 {
                     query = request.order?.ToLower() == "desc"
@@ -125,8 +107,6 @@ namespace ChronosSuite.Controllers
                             "reportdescription" => query.OrderByDescending(vr => vr.ReportDescription),
                             "entrytime" => query.OrderByDescending(vr => vr.EntryTime),
                             "exittime" => query.OrderByDescending(vr => vr.ExitTime),
-                            "scheduledentrytime" => query.OrderByDescending(vr => vr.ScheduledEntryTime),
-                            "scheduledexittime" => query.OrderByDescending(vr => vr.ScheduledExitTime),
                             _ => query.OrderByDescending(vr => EF.Property<object>(vr, request.sort))
                         }
                         : request.sort.ToLower() switch
@@ -139,8 +119,6 @@ namespace ChronosSuite.Controllers
                             "reportdescription" => query.OrderBy(vr => vr.ReportDescription),
                             "entrytime" => query.OrderBy(vr => vr.EntryTime),
                             "exittime" => query.OrderBy(vr => vr.ExitTime),
-                            "scheduledentrytime" => query.OrderBy(vr => vr.ScheduledEntryTime),
-                            "scheduledexittime" => query.OrderBy(vr => vr.ScheduledExitTime),
                             _ => query.OrderBy(vr => EF.Property<object>(vr, request.sort))
                         };
                 }
@@ -165,12 +143,8 @@ namespace ChronosSuite.Controllers
                                     HasEntered = p.HasEntered,
                                     VisitPurpose = p.VisitPurpose,
                                     IsImmediateVisit = p.IsImmediateVisit,
-                                    ReportDescription = p.ReportDescription,
-                                    ScheduledEntryTime = p.ScheduledEntryTime,
-                                    ScheduledExitTime = p.ScheduledExitTime,
                                     CreatedAt = p.CreatedAt,
                                     UpdatedAt = p.UpdatedAt,
-
                                     VisitorFullName = (p.Visitor.FirstName + " " + p.Visitor.LastName),
                                     AuthorizedEmployeeFullName = (p.AuthorizedEmployee.FirstName + " " + p.AuthorizedEmployee.LastName),
                                     LocationName = p.Location != null ? p.Location.Name : string.Empty
@@ -217,7 +191,8 @@ namespace ChronosSuite.Controllers
                     EntryTime = visit.EntryTime,
                     ExitTime = visit.ExitTime,
                     ScheduledEntryTime = visit.ScheduledEntryTime,
-                    ScheduledExitTime = visit.ScheduledExitTime
+                    ScheduledExitTime = visit.ScheduledExitTime,
+                    IsImmediateVisit = visit.IsImmediateVisit
                 };
 
                 return Json(new { success = true, visit = dtoVisit });
@@ -243,6 +218,7 @@ namespace ChronosSuite.Controllers
             {
                 return Json(new { success = false, message = "Datos incorrectos" });
             }
+
             try
             {
                 DateTime scheduledEntryTime = DateTime.Parse(model.ScheduledEntryTime);
@@ -250,11 +226,6 @@ namespace ChronosSuite.Controllers
 
                 DateTime today = DateTime.Today;
                 DateTime now = DateTime.Now;
-
-                if (scheduledEntryTime <= now)
-                {
-                    return Json(new { success = false, message = "La fecha/hora de entrada debe ser mayor que la hora actual del día de hoy." });
-                }
 
                 if (scheduledExitTime <= scheduledEntryTime)
                 {
@@ -322,5 +293,180 @@ namespace ChronosSuite.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> MarkEntry(long visitRecordId)
+        {
+            try
+            {
+                var visitRecord = await _context.VisitRecords.FirstOrDefaultAsync(vr => vr.Id == visitRecordId);
+
+                if (visitRecord == null)
+                {
+                    return Json(new { success = false, message = "Registro de visita no encontrado." });
+                }
+
+                if (visitRecord.HasEntered)
+                {
+                    return Json(new { success = false, message = "El visitante ya ha registrado su entrada." });
+                }
+
+                visitRecord.HasEntered = true;
+                visitRecord.EntryTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, DateTime.Now.Minute, 0);
+                visitRecord.UpdatedAt = DateTime.Now;
+
+                _context.VisitRecords.Update(visitRecord);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Entrada registrada exitosamente." });
+            }
+            catch (FormatException e)
+            {
+                return Json(new { success = false, message = $"Error de formato: {e.Message}" });
+            }
+            catch (NpgsqlException e)
+            {
+                return Json(new { success = false, message = $"Error en base de datos: {e.Message}" });
+            }
+            catch (Exception e)
+            {
+                return Json(new { success = false, message = $"Error inesperado: {e.Message}" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MarkExit(long visitRecordId)
+        {
+            try
+            {
+                var visitRecord = await _context.VisitRecords.FirstOrDefaultAsync(vr => vr.Id == visitRecordId);
+
+                if (visitRecord == null)
+                {
+                    return Json(new { success = false, message = "Registro de visita no encontrado." });
+                }
+
+                if (!visitRecord.HasEntered)
+                {
+                    return Json(new { success = false, message = "El visitante no ha registrado su entrada." });
+                }
+
+                if (visitRecord.HasExited)
+                {
+                    return Json(new { success = false, message = "El visitante ya ha registrado su salida." });
+                }
+
+                visitRecord.HasExited = true;
+                visitRecord.ExitTime = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day, DateTime.Now.Hour, DateTime.Now.Minute, 0);
+                visitRecord.UpdatedAt = DateTime.Now;
+
+                _context.VisitRecords.Update(visitRecord);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Salida registrada exitosamente." });
+            }
+            catch (FormatException e)
+            {
+                return Json(new { success = false, message = $"Error de formato: {e.Message}" });
+            }
+            catch (NpgsqlException e)
+            {
+                return Json(new { success = false, message = $"Error en base de datos: {e.Message}" });
+            }
+            catch (Exception e)
+            {
+                return Json(new { success = false, message = $"Error inesperado: {e.Message}" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> MarkAsReported(long visitRecordId, string reportDescription)
+        {
+            try
+            {
+                var visitRecord = await _context.VisitRecords.FirstOrDefaultAsync(vr => vr.Id == visitRecordId);
+
+                if (visitRecord == null)
+                {
+                    return Json(new { success = false, message = "Registro de visita no encontrado." });
+                }
+
+                if (visitRecord.ReportFlag)
+                {
+                    return Json(new { success = false, message = "El registro ya ha sido marcado como reportado." });
+                }
+
+                visitRecord.ReportFlag = true;
+                visitRecord.ReportDescription = reportDescription;
+                visitRecord.UpdatedAt = DateTime.Now;
+
+                _context.VisitRecords.Update(visitRecord);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Registro marcado como reportado exitosamente." });
+            }
+            catch (FormatException e)
+            {
+                return Json(new { success = false, message = $"Error de formato: {e.Message}" });
+            }
+            catch (NpgsqlException e)
+            {
+                return Json(new { success = false, message = $"Error en base de datos: {e.Message}" });
+            }
+            catch (Exception e)
+            {
+                return Json(new { success = false, message = $"Error inesperado: {e.Message}" });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetReportStatus(long visitRecordId)
+        {
+            var visit = await _context.VisitRecords
+                                    .AsNoTracking()
+                                    .FirstOrDefaultAsync(v => v.Id == visitRecordId);
+
+            if (visit == null)
+                return Json(new { success = false, message = "Registro no encontrado." });
+
+            return Json(new
+            {
+                success = true,
+                reportFlag = visit.ReportFlag,
+                reportDescription = visit.ReportDescription
+            });
+        }
+
+
+        [HttpDelete]
+        public IActionResult Delete(long id)
+        {
+            try
+            {
+                if (id <= 0)
+                    return Json(new { success = false, message = "Visitante invalido." });
+
+                var visit = _context.VisitRecords.FirstOrDefault(l => l.Id == id);
+
+                if (visit == null)
+                    return Json(new { success = false, message = "Registro no encontrado." });
+
+                _context.VisitRecords.Remove(visit);
+                _context.SaveChanges();
+
+                return Json(new { success = true, message = "Visitante eliminado exitosamente." });
+            }
+            catch (FormatException e)
+            {
+                return Json(new { success = false, errorMessage = $"Error al eliminar: {e.Message}" });
+            }
+            catch (NpgsqlException e)
+            {
+                return Json(new { success = false, errorMessage = $"Error al eliminar: {e.Message}" });
+            }
+            catch (Exception e)
+            {
+                return Json(new { success = false, errorMessage = $"Error inesperado: {e.Message}" });
+            }
+        }
     }
 }

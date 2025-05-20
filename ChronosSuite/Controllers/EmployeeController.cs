@@ -138,7 +138,7 @@ namespace ChronosSuite.Controllers
                 var employees = await _context.Employees
                     .OrderBy(e => e.FirstName)
                     .ThenBy(e => e.LastName)
-                    .Select(e => new { label = $"{e.FirstName} {e.LastName}", value = e.Id })
+                    .Select(e => new { label = $"{e.FirstName} {e.LastName}", value = e.Id , description = e.Position})
                     .ToListAsync();
 
                 return Json(employees);

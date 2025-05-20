@@ -2,7 +2,6 @@
 const modalVisitRecord = new bootstrap.Modal(document.getElementById('modalVisitRecord'));
 
 const exactHoursContainer = document.getElementById('exactHoursContainer');
-const isImmediateVisitContainer = document.getElementById('isImmediateVisitContainer');
 
 const isImmediateVisit = document.getElementById('isImmediateVisit');
 const entryTime = document.getElementById('entryTime');
@@ -99,11 +98,11 @@ function getAllVisitRecord() {
             sortable: true,
             filterControl: 'input',
             align: 'center',
-            formatter: function(value) {
+            formatter: function (value) {
                 // Longitud máxima antes de mostrar el botón (ej: 30 caracteres)
                 const maxLength = 30;
                 const safeValue = value.replace(/'/g, "\\'").replace(/\n/g, '<br>');
-        
+
                 // Si el texto es corto, mostrarlo directamente
                 if (value.length <= maxLength) {
                     return `<span>${value}</span>`;
@@ -130,49 +129,69 @@ function getAllVisitRecord() {
                 }
             }
         },
-        {
-            field: 'entryTime',
-            title: 'Hora de Entrada',
-            sortable: true,
-            filterControl: 'input',
-            align: 'center'
+        {  
+           field: 'entryTime',  
+           title: 'Hora de Entrada',  
+           sortable: true,  
+           filterControl: 'input',  
+           align: 'center',  
+           formatter: function (value) {  
+               if (!value) return '';  
+               const date = new Date(value);  
+               return date.toLocaleString('es-ES', {  
+                   day: '2-digit',  
+                   month: '2-digit',  
+                   year: 'numeric',  
+                   hour: '2-digit',  
+                   minute: '2-digit',  
+                   hour12: false  
+               });  
+           }  
+        },  
+        {  
+           field: 'exitTime',  
+           title: 'Hora de Salida',  
+           sortable: true,  
+           filterControl: 'input',  
+           align: 'center',  
+           formatter: function (value) {  
+               if (!value) return '';  
+               const date = new Date(value);  
+               return date.toLocaleString('es-ES', {  
+                   day: '2-digit',  
+                   month: '2-digit',  
+                   year: 'numeric',  
+                   hour: '2-digit',  
+                   minute: '2-digit',  
+                   hour12: false  
+               });  
+           }  
         },
         {
-            field: 'exitTime',
-            title: 'Hora de Salida',
-            sortable: true,
-            filterControl: 'input',
-            align: 'center',
-        },
-        {
-            field: 'scheduledEntryTime',
-            title: 'Hora de entrada programada',
-            sortable: true,
-            filterControl: 'input',
-            align: 'center',
-        },
-        {
-            field: 'scheduledExitTime',
-            title: 'Hora de salida programada',
-            sortable: true,
-            filterControl: 'input',
-            align: 'center',
-        },
-        {
-            field: 'hasEntered',
-            title: 'Entró',
-            sortable: true,
+            field: 'isImmediateVisit',
+            title: 'Visita Inmediata',
             filterControl: 'select',
+            filterData: 'json:{"true":"Sí","false":"No"}',
             align: 'center',
             formatter: function (value) {
                 return value ? '<span class="badge bg-success fs-6">Sí</span>' : '<span class="badge bg-danger fs-6">No</span>';
             }
         },
         {
-            field: 'isImmediateVisit',
-            title: 'Visita Inmediata',
-            sortable: true,
+            field: 'hasEntered',
+            title: 'Entró',
             filterControl: 'select',
+            filterData: 'json:{"true":"Sí","false":"No"}',
+            align: 'center',
+            formatter: function (value) {
+                return value ? '<span class="badge bg-success fs-6">Sí</span>' : '<span class="badge bg-danger fs-6">No</span>';
+            }
+        },
+        {
+            field: 'hasExited',
+            title: 'Salio',
+            filterControl: 'select',
+            filterData: 'json:{"true":"Sí","false":"No"}',
             align: 'center',
             formatter: function (value) {
                 return value ? '<span class="badge bg-success fs-6">Sí</span>' : '<span class="badge bg-danger fs-6">No</span>';
@@ -183,13 +202,26 @@ function getAllVisitRecord() {
             title: 'Acciones',
             align: 'center',
             formatter: function (value, row) {
-                return `
-                    <button class="btn btn-warning btn-sm" onclick="getById('${row.id}')">
-                        <i class="bi bi-pencil-fill"></i>
-                    </button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteVisitRecord('${row.id}')">
-                        <i class="bi bi-trash-fill"></i>
-                    </button>
+                return `  
+                    <div class="d-flex justify-content-center gap-2">  
+                        <button class="btn btn-info btn-sm" onclick="getById('${row.id}')">  
+                            <i class="bi bi-eye-fill"></i>  
+                        </button>  
+                        <button class="btn btn-warning btn-sm" onclick="reportVisitRecord('${row.id}')">  
+                            <i class="bi bi-flag-fill"></i>  
+                        </button>  
+                        ${!row.hasEntered ? `
+                        <button class="btn btn-secondary btn-sm" onclick="markEntry('${row.id}')">  
+                            <i class="bi bi-box-arrow-in-right"></i>  
+                        </button>` : ''}  
+                        ${row.hasEntered && !row.hasExited ? `
+                        <button class="btn btn-outline-secondary btn-sm" onclick="markExit('${row.id}')">  
+                            <i class="bi bi-box-arrow-left"></i>  
+                        </button>` : ''}  
+                        <button class="btn btn-danger btn-sm" onclick="deleteVisitRecord('${row.id}')">  
+                            <i class="bi bi-trash-fill"></i>  
+                        </button>  
+                    </div>  
                 `;
             },
             searchable: false,
@@ -197,12 +229,6 @@ function getAllVisitRecord() {
             filterControl: false
         }
     ];
-
-    const hasEnteredFilterData = JSON.stringify([
-        { value: '', text: 'Todos' },
-        { value: 'true', text: 'Sí' },
-        { value: 'false', text: 'No' }
-    ]);
 
     $('#tbAllvisitRecords').bootstrapTable({
         locale: 'es-MX',
@@ -233,9 +259,207 @@ function getAllVisitRecord() {
                 filter: getFilters('tbAllvisitRecords')
             };
         },
-        responseHandler: function (res) {
-            console.log('JSON recibido:', res);
-            return res;
+        rowStyle: function (row) {
+            if (row.reportFlag) {
+                return { classes: 'table-warning' };
+            }
+            return {};
+        }  
+    });
+}
+
+function markEntry(id) { 
+   console.log(id)
+   Swal.fire({  
+       title: 'Confirmar Entrada',  
+       text: '¿Está seguro de que desea marcar la entrada para este registro?',  
+       icon: 'warning',  
+       showCancelButton: true,  
+       confirmButtonColor: '#009b8b',  
+       cancelButtonColor: '#ff6b6b',  
+       confirmButtonText: 'Sí, marcar entrada',  
+       cancelButtonText: 'Cancelar'  
+   }).then((result) => {  
+       if (result.isConfirmed) {  
+           Swal.fire({  
+               title: 'Cargando...',  
+               text: 'Por favor, espere mientras se procesa la entrada.',  
+               allowOutsideClick: false,  
+               didOpen: () => {  
+                   Swal.showLoading();  
+               }  
+           });  
+
+           $.ajax({  
+               url: `/VisitRecord/MarkEntry?visitRecordId=${id}`,  
+               type: 'POST',  
+               success: function (response) {  
+                   if (response.success) {  
+                       Swal.fire({  
+                           icon: 'success',  
+                           title: 'Éxito',  
+                           text: response.message,  
+                           showConfirmButton: false,  
+                           timer: 2500  
+                       });  
+
+                       $('#tbAllvisitRecords').bootstrapTable('refresh');  
+                   } else {  
+                       Swal.fire({  
+                           icon: 'error',  
+                           title: 'Error',  
+                           text: response.message  
+                       });  
+                   }  
+               },  
+               error: function () {  
+                   Swal.fire({  
+                       icon: 'error',  
+                       title: 'Error',  
+                       text: 'Hubo un problema al marcar la entrada. Por favor, inténtelo de nuevo.'  
+                   });  
+               }  
+           });  
+       }  
+   });  
+}
+
+function markExit(id) {  
+   console.log(id)  
+   Swal.fire({  
+       title: 'Confirmar Salida',  
+       text: '¿Está seguro de que desea marcar la salida para este registro?',  
+       icon: 'warning',  
+       showCancelButton: true,  
+       confirmButtonColor: '#009b8b',  
+       cancelButtonColor: '#ff6b6b',  
+       confirmButtonText: 'Sí, marcar salida',  
+       cancelButtonText: 'Cancelar'  
+   }).then((result) => {  
+       if (result.isConfirmed) {  
+           Swal.fire({  
+               title: 'Cargando...',  
+               text: 'Por favor, espere mientras se procesa la salida.',  
+               allowOutsideClick: false,  
+               didOpen: () => {  
+                   Swal.showLoading();  
+               }  
+           });  
+
+           $.ajax({  
+               url: `/VisitRecord/MarkExit?visitRecordId=${id}`,  
+               type: 'POST',  
+               success: function (response) {  
+                   if (response.success) {  
+                       Swal.fire({  
+                           icon: 'success',  
+                           title: 'Éxito',  
+                           text: response.message,  
+                           showConfirmButton: false,  
+                           timer: 2500  
+                       });  
+
+                       $('#tbAllvisitRecords').bootstrapTable('refresh');  
+                   } else {  
+                       Swal.fire({  
+                           icon: 'error',  
+                           title: 'Error',  
+                           text: response.message  
+                       });  
+                   }  
+               },  
+               error: function () {  
+                   Swal.fire({  
+                       icon: 'error',  
+                       title: 'Error',  
+                       text: 'Hubo un problema al marcar la salida. Por favor, inténtelo de nuevo.'  
+                   });  
+               }  
+           });  
+       }  
+   });  
+}
+
+function reportVisitRecord(id) {
+    $.get(`/VisitRecord/GetReportStatus?visitRecordId=${id}`, function (response) {
+        if (!response.success) {
+            Swal.fire('Error', response.message, 'error');
+            return;
+        }
+
+        if (response.reportFlag) {
+            // Ya está reportado, mostrar descripción
+            Swal.fire({
+                icon: 'info',
+                title: 'Ya reportado',
+                html: `<strong>Descripción:</strong><br>${response.reportDescription}`,
+                confirmButtonColor: '#009b8b',
+                confirmButtonText: 'Cerrar'
+            });
+        } else {
+            // Preguntar si desea reportar
+            Swal.fire({
+                title: 'Confirmar Reporte',
+                text: '¿Está seguro de que desea marcar este registro como "En Reporte"?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#009b8b',
+                cancelButtonColor: '#ff6b6b',
+                confirmButtonText: 'Sí, reportar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Mostrar modal para ingresar descripción
+                    Swal.fire({
+                        title: 'Descripción del Reporte',
+                        input: 'textarea',
+                        inputPlaceholder: 'Escriba aquí la razón del reporte...',
+                        inputAttributes: {
+                            'aria-label': 'Descripción del reporte'
+                        },
+                        showCancelButton: true,
+                        confirmButtonText: 'Guardar',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: '#009b8b',
+                        cancelButtonColor: '#ff6b6b',
+                        preConfirm: (desc) => {
+                            if (!desc || desc.trim().length < 5) {
+                                Swal.showValidationMessage('La descripción debe tener al menos 5 caracteres.');
+                            }
+                            return desc;
+                        }
+                    }).then((resultDesc) => {
+                        if (resultDesc.isConfirmed) {
+                            // Guardar el reporte con descripción
+                            $.ajax({
+                                url: `/VisitRecord/MarkAsReported`,
+                                type: 'POST',
+                                data: {
+                                    visitRecordId: id,
+                                    reportDescription: resultDesc.value
+                                },
+                                success: function (res) {
+                                    if (res.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Reportado',
+                                            text: res.message,
+                                            timer: 2500,
+                                            showConfirmButton: false
+                                        });
+                                        $('#tbAllvisitRecords').bootstrapTable('refresh');
+                                    } else {
+                                        Swal.fire('Error', res.message, 'error');
+                                    }
+                                },
+                                error: function () {
+                                    Swal.fire('Error', 'No se pudo guardar el reporte.', 'error');
+                                }
+                            });
+                        }
+                    });
+                }
+            });
         }
     });
 }
@@ -248,7 +472,6 @@ function getById(id) {
         success: function (data) {
             frmVisitRecord.reset();
             exactHoursContainer.classList.remove('d-none');
-            isImmediateVisitContainer.classList.add('d-none');
             idVisitRecord = data.visit.id;
 
             visitorSelector.setValue(data.visit.visitorId);
@@ -256,17 +479,26 @@ function getById(id) {
             authorizedEmployeeSelector.setValue(data.visit.authorizedEmployeeId);
             visitPurposeSelector.setValue(data.visit.visitPurpose);
 
+            visitorSelector.disable();
+            locationSelector.disable();
+            authorizedEmployeeSelector.disable();
+            visitPurposeSelector.disable();
+
             frmVisitRecord.querySelectorAll("input[name], textarea[name]").forEach(element => {
                 const fieldName = element.name;
 
                 if (data.visit.hasOwnProperty(fieldName)) {
                     const value = data.visit[fieldName];
-                    element.value = value;
+                    if (element.type === "checkbox") {
+                        element.checked = Boolean(value);
+                    } else {
+                        element.value = value;
+                    }
                 }
+                element.disabled = true;
             });
 
-            // btnSaveVisitor.classList.add('d-none');
-            // btnUpdateVisitor.classList.remove('d-none');
+            btnSaveVisitRecord.classList.add('d-none');
             modalVisitRecord.show();
         },
         error: function () {
@@ -281,12 +513,73 @@ function getById(id) {
     });
 }
 
+function deleteVisitRecord(id) {
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: "No podrás revertir esta acción.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ff6b6b',
+        cancelButtonColor: '#006a6a',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                type: "delete",
+                url: `${'/VisitRecord/Delete'}?id=${id}`,
+                contentType: "application/json",
+                success: function (response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Eliminado',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 2500
+                        });
+                        $('#tbAllvisitRecords').bootstrapTable('refresh');
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message,
+                            showConfirmButton: false,
+                            timer: 2500
+                        });
+                    }
+                },
+                error: function () {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo eliminar el visitante. Inténtalo de nuevo.'
+                    });
+                }
+            });
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     GetSelects();
     getAllVisitRecord();
 
     btnModalVisitRecord.addEventListener('click', function () {
         frmVisitRecord.reset();
+        btnSaveVisitRecord.classList.remove('d-none');
+        visitorSelector.enable();
+        locationSelector.enable();
+        authorizedEmployeeSelector.enable();
+        visitPurposeSelector.enable();
+
+
+        frmVisitRecord.querySelectorAll("input[name], textarea[name]").forEach(element => {
+            element.disabled = false;
+        });
+
+        exactHoursContainer.classList.add('d-none')
+        isImmediateVisit.disabled = false
         scheduledEntryTime.disabled = false;
         modalVisitRecord.show();
     });
@@ -315,7 +608,7 @@ document.addEventListener('DOMContentLoaded', function () {
             VisitorId: visitorSelector.value,
             LocationId: locationSelector.value,
             AuthorizedEmployeeId: authorizedEmployeeSelector.value,
-            VisitPurpose: visitPurposeSelector.value,
+            VisitPurpose: visitPurposeSelector.value.toUpperCase(),
         };
 
         frmVisitRecord.querySelectorAll('input, select, textarea').forEach((element) => {

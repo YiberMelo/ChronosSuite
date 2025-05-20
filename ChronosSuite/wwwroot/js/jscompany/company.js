@@ -1,4 +1,5 @@
 const btnShowModalCompany = document.getElementById('btnShowModalCompany');
+const btnCloseModalCompany = document.getElementById('btnCloseModalCompany');
 const modalCompany = new bootstrap.Modal(document.getElementById('modalCompany'));
 const frmCompany = document.getElementById('frmCompany');
 const btnSaveCompany = document.getElementById('btnSaveCompany');
@@ -16,7 +17,7 @@ function getAllCompanies() {
             align: 'center',
             formatter: function (value, row) {
                 return `
-                    <button class="btn btn-warning btn-sm" onclick="getById('${row.id}')">
+                    <button class="btn btn-warning btn-sm" onclick="getComapnyById('${row.id}')">
                         <i class="bi bi-pencil-fill"></i>
                     </button>
                     <button class="btn btn-danger btn-sm" onclick="deleteCompany('${row.id}')">
@@ -66,7 +67,8 @@ function getAllCompanies() {
     });
 }
 
-function getById(id) {
+function getComapnyById(id) {
+    modalComanyTb.hide();
     $.ajax({
         url: `${'/Company/GetById'}?id=${id}`,
         type: 'GET',
@@ -161,7 +163,12 @@ document.addEventListener('DOMContentLoaded', function () {
         idCompany = 0;
         btnSaveCompany.classList.remove('d-none');
         btnUpdateCompany.classList.add('d-none');
+        modalComanyTb.hide();
         modalCompany.show();
+    });
+
+    btnCloseModalCompany.addEventListener('click', function () {
+        modalComanyTb.show();
     });
 
     btnSaveCompany.addEventListener('click', function () {
